@@ -27,6 +27,7 @@ public class InputManager : IInputManager
 
     public void Update(GameTime gameTime)
     {
+        if( _buttons == null || _buttons.Count == 0) return;
         foreach (var button in _buttons.Values)
         {
             button.Update(gameTime);
