@@ -36,4 +36,9 @@ public abstract class Component
         if (element == null) throw new ArgumentNullException(nameof(element));
 
     }
+
+    public virtual void Dispose(bool disposing)
+    {
+
+    }
 }

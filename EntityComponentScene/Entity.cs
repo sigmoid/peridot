@@ -228,6 +228,11 @@ public class Entity
             child.Cleanup();
         }
 
+        foreach (var component in _components)
+        {
+            component.Dispose(true);
+        }
+
         // Clear components and children
         _components.Clear();
         _children.Clear();

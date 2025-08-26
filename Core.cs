@@ -169,4 +169,14 @@ public class Core : Game
 
         base.Draw(gameTime);
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            CurrentScene.Dispose();
+            SpriteBatch?.Dispose();
+        }
+        base.Dispose(disposing);
+    }
 }

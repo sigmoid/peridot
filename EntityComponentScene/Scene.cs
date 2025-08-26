@@ -504,6 +504,14 @@ public class Scene
         }
     }
 
+    public void Dispose()
+    {
+        foreach (var entity in _entities)
+        {
+            entity.Cleanup();
+        }
+    }
+
     /// <summary>
     /// Draw all entities in the scene
     /// </summary>

@@ -14,6 +14,10 @@ public class AudioLibrary
 
     public void Load(ContentManager content, string dictionaryName)
     {
+        if (!File.Exists(dictionaryName))
+        {
+            return;
+        }
         var soundEffectList = File.ReadAllLines(dictionaryName);
         foreach (var soundEffectName in soundEffectList)
         {
