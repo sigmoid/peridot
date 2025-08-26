@@ -73,13 +73,13 @@ public class Core : Game
 
     protected override void Initialize()
     {
-        base.Initialize();
-
         GraphicsDevice = base.GraphicsDevice;
 
         SpriteBatch = new SpriteBatch(GraphicsDevice);
 
         Camera = new Camera2D(GraphicsDevice.Viewport);
+
+        base.Initialize();
     }
 
     protected override void LoadContent()

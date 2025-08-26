@@ -43,6 +43,7 @@ public class Scene
                         {
                             // Use EntityFactory to handle both inline entities and file references
                             var entity = EntityFactory.FromXElement(entityElement, content.RootDirectory);
+                            entity.Initialize();
                             res._entities.Add(entity);
                         }
                         catch (Exception ex)
