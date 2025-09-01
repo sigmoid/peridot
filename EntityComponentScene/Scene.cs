@@ -505,6 +505,14 @@ public class Scene
         }
     }
 
+    public void DrawOffscreen()
+    {
+        foreach (var entity in _entities)
+        {
+            entity.DrawOffscreen();
+        }
+    }
+
     public void Dispose()
     {
         foreach (var entity in _entities)

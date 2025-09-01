@@ -161,6 +161,8 @@ public class Core : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        CurrentScene.DrawOffscreen();
+
         GraphicsDevice.Clear(Color.SkyBlue);
 
         SpriteBatch.Begin(transformMatrix: Camera.GetViewMatrix(), sortMode: SpriteSortMode.FrontToBack, samplerState: SamplerState.PointClamp);

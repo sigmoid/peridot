@@ -214,6 +214,19 @@ public class Entity
         }
     }
 
+    public void DrawOffscreen()
+    {
+        foreach (var component in _components)
+        {
+            component.DrawOffscreen();
+        }
+
+        foreach (var child in _children)
+        {
+            child.DrawOffscreen();
+        }
+    }
+
     /// <summary>
     /// Cleanup the entity and release its name back to the name provider
     /// </summary>
