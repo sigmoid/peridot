@@ -38,4 +38,10 @@ public class Camera2D
         Vector2 bottomRight = Position + new Vector2(_viewport.Width / 2f, _viewport.Height / 2f) / Zoom;
         return new Vector4(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y);
     }
+
+    public Vector2 ScreenToWorld(Vector2 screenPosition)
+    {
+        Matrix invView = Matrix.Invert(GetViewMatrix());
+        return Vector2.Transform(screenPosition, invView);
+    }
 }
