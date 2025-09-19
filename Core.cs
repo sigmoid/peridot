@@ -21,6 +21,7 @@ public class Core : Game
     public static new GraphicsDevice GraphicsDevice { get; private set; }
 
     public static SpriteBatch SpriteBatch { get; private set; }
+    public static SpriteBatch UIBatch { get; private set; }
 
     public static new ContentManager Content { get; private set; }
 
@@ -35,6 +36,8 @@ public class Core : Game
     public static Camera2D Camera { get; private set; }
 
     public static TestRecorder TestRecorder { get; private set; }
+
+    public static UISystem UISystem { get; private set; } = new UISystem();
 
     public static int ScreenWidth => Graphics.PreferredBackBufferWidth;
     public static int ScreenHeight => Graphics.PreferredBackBufferHeight;
@@ -76,6 +79,7 @@ public class Core : Game
         GraphicsDevice = base.GraphicsDevice;
 
         SpriteBatch = new SpriteBatch(GraphicsDevice);
+        UIBatch = new SpriteBatch(GraphicsDevice);
 
         Camera = new Camera2D(GraphicsDevice.Viewport);
 
@@ -113,6 +117,8 @@ public class Core : Game
         CurrentScene.Update(gameTime);
 
         _testRunner.Update(gameTime);
+
+        UISystem.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         // Test Recording Controls
         if (keyboardState.IsKeyDown(Keys.F5) && _previousKeyboardState.IsKeyUp(Keys.F5) && !_isRecording)
@@ -168,6 +174,10 @@ public class Core : Game
         SpriteBatch.Begin(transformMatrix: Camera.GetViewMatrix(), sortMode: SpriteSortMode.FrontToBack, samplerState: SamplerState.PointClamp);
         CurrentScene.Draw(SpriteBatch);
         SpriteBatch.End();
+
+        UIBatch.Begin(samplerState: SamplerState.PointClamp);
+        UISystem.Draw(UIBatch); 
+        UIBatch.End();
 
         base.Draw(gameTime);
     }
