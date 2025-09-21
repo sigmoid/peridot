@@ -70,7 +70,7 @@ public class SpriteComponent : Component
     {
         if (_sprite != null && Entity != null)
         {
-            _sprite.Draw(spriteBatch, Entity.Position);
+            _sprite.Draw(spriteBatch, Entity.Position, Entity.Rotation);
         }
     }
 

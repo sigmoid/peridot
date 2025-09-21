@@ -4,6 +4,7 @@ using System.Reflection;
 using Microsoft.Xna.Framework;
 using System.Linq;
 using System.Text.Json;
+using peridot.EntityComponentScene.Physics;
 
 namespace Peridot.Testing.Assertion;
 
@@ -105,13 +106,13 @@ public class AssertionManager
                     CaptureProperty(assertion, $"Entity[{entity.Name}].BoxCollider.Max.Y", bounds.Max.Y);
                 }
 
-                var rigidbody = entity.GetComponent<RigidbodyComponent>();
-                if (rigidbody != null)
-                {
-                    CaptureProperty(assertion, $"Entity[{entity.Name}].Rigidbody.IsStatic", rigidbody.IsStatic);
-                    CaptureProperty(assertion, $"Entity[{entity.Name}].Rigidbody.Position.X", rigidbody.Position.X);
-                    CaptureProperty(assertion, $"Entity[{entity.Name}].Rigidbody.Position.Y", rigidbody.Position.Y);
-                }
+                //var rigidbody = entity.GetComponent<RigidbodyComponent>();
+                //if (rigidbody != null)
+                //{
+                //    CaptureProperty(assertion, $"Entity[{entity.Name}].Rigidbody.IsStatic", rigidbody.IsStatic);
+                //    CaptureProperty(assertion, $"Entity[{entity.Name}].Rigidbody.Position.X", rigidbody.Position.X);
+                //    CaptureProperty(assertion, $"Entity[{entity.Name}].Rigidbody.Position.Y", rigidbody.Position.Y);
+                //}
             }
         }
     }

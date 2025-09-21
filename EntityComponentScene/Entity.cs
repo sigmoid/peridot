@@ -28,6 +28,11 @@ public class Entity
         set => _localPosition = Parent != null ? value - Parent.Position : value;
     }
 
+    public float Rotation
+    {
+        get;set;
+    }
+
     public Entity()
     {
         _components = new List<Component>();

@@ -7,4 +7,7 @@
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\VelcroPhysics\src\VelcroPhysics\VelcroPhysics.MonoGame.csproj" />
+  </ItemGroup>
 </Project>

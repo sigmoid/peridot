@@ -85,7 +85,7 @@ public class AnimatedSpriteComponent : Component
     {
         if (_animatedSprite != null && Entity != null)
         {
-            _animatedSprite.Draw(spriteBatch, Entity.Position);
+            _animatedSprite.Draw(spriteBatch, Entity.Position, Entity.Rotation);
         }
     }
 

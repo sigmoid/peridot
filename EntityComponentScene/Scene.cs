@@ -7,6 +7,7 @@ using System.IO;
 using System.Xml;
 using System.Xml.Linq;
 using Peridot.EntityComponentScene.Serialization;
+using peridot.EntityComponentScene.Physics;
 
 namespace Peridot;
 
@@ -489,7 +490,7 @@ public class Scene
         {
             var rigidbody = entity.GetComponent<RigidbodyComponent>();
 
-            if (rigidbody != null && !rigidbody.IsStatic)
+            if (rigidbody != null && !(rigidbody.BodyType == BodyType.Static))
             {
                 var boxCollider = entity.GetComponent<BoxColliderComponent>();
                 if (boxCollider != null)

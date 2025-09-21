@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using peridot.Physics;
 using Peridot.Graphics;
 using Peridot.Testing;
 
@@ -38,8 +39,10 @@ public class Core : Game
     public static TestRecorder TestRecorder { get; private set; }
 
     public static UISystem UISystem { get; private set; } = new UISystem();
+    public static PhysicsSystem Physics { get; private set; }
+    public static Vector2 Gravity { get; set; }
 
-    public static int ScreenWidth => Graphics.PreferredBackBufferWidth;
+	public static int ScreenWidth => Graphics.PreferredBackBufferWidth;
     public static int ScreenHeight => Graphics.PreferredBackBufferHeight;
 
     TestRunner _testRunner;
@@ -83,7 +86,9 @@ public class Core : Game
 
         Camera = new Camera2D(GraphicsDevice.Viewport);
 
-        base.Initialize();
+        Physics = new PhysicsSystem(Gravity);
+
+		base.Initialize();
     }
 
     protected override void LoadContent()
@@ -111,6 +116,8 @@ public class Core : Game
     protected override void Update(GameTime gameTime)
     {
         KeyboardState keyboardState = Keyboard.GetState();
+
+        Physics.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
         InputManager.Update(gameTime);
 

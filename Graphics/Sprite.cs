@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Peridot.Graphics;
+using System;
 
 namespace Peridot.Graphics;
 
@@ -130,8 +131,10 @@ public class Sprite
     /// </summary>
     /// <param name="spriteBatch">The SpriteBatch instance used for batching draw calls.</param>
     /// <param name="position">The xy-coordinate position to render this sprite at.</param>
-    public void Draw(SpriteBatch spriteBatch, Vector2 position)
+    public void Draw(SpriteBatch spriteBatch, Vector2 position, float rotation)
     {
-        Region.Draw(spriteBatch, position, Color, Rotation, Origin, Scale, Effects, LayerDepth);
+        if(rotation > 0)
+            Console.WriteLine(rotation);
+		Region.Draw(spriteBatch, position, Color, rotation, Origin, Scale, Effects, LayerDepth);
     }
 }
