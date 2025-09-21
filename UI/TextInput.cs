@@ -30,6 +30,7 @@ public class TextInput : IUIElement
     
     // Keyboard state tracking
     private KeyboardState _previousKeyboardState;
+    private MouseState _previousMouseState;
     private float _keyRepeatTimer;
     private Keys _repeatingKey;
     private const float KEY_REPEAT_DELAY = 0.5f;
@@ -100,15 +101,20 @@ public class TextInput : IUIElement
         _pixel.SetData(new[] { Color.White });
         
         _previousKeyboardState = Keyboard.GetState();
+        _previousMouseState = Mouse.GetState();
     }
 
     public void Update(float deltaTime)
     {
-        var mousePosition = Core.InputManager.GetMousePosition() * new Vector2(Core.ScreenWidth, Core.ScreenHeight);
+        var mouseState = Mouse.GetState();
+        var mousePosition = new Vector2(mouseState.X, mouseState.Y);
         var keyboardState = Keyboard.GetState();
         
         // Handle mouse clicks for focus
-        if (Core.InputManager.GetButton("LeftMouse")?.IsPressed == true)
+        bool isMousePressed = mouseState.LeftButton == ButtonState.Pressed;
+        bool isMouseClick = isMousePressed && _previousMouseState.LeftButton == ButtonState.Released;
+        
+        if (isMouseClick)
         {
             bool wasClicked = _bounds.Contains(mousePosition);
             
@@ -139,6 +145,7 @@ public class TextInput : IUIElement
         }
         
         _previousKeyboardState = keyboardState;
+        _previousMouseState = mouseState;
     }
 
     private void HandleKeyboardInput(KeyboardState keyboardState, float deltaTime)
@@ -431,11 +438,6 @@ public class TextInput : IUIElement
             if (focused)
             {
                 OnFocusGained?.Invoke();
-                // Ensure left mouse click is registered for input
-                if (Core.InputManager.GetButton("LeftClick") == null)
-                {
-                    Core.InputManager.AddButton("LeftClick", MouseButton.Left);
-                }
             }
             else
             {

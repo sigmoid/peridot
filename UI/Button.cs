@@ -3,6 +3,7 @@ namespace Peridot.UI;
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Peridot;
 
 public class Button : IUIElement
@@ -17,6 +18,7 @@ public class Button : IUIElement
     private Color _hoverColor = Color.LightGray;
     private Color _defaultColor = Color.DarkGray;
     private bool _isHovered = false;
+    private bool _wasMousePressed = false;
 
     public Button(Rectangle bounds, string text, SpriteFont font, Color regularColor, Color hoverColor, Color textColor, Action onClick)
     {
@@ -36,14 +38,19 @@ public class Button : IUIElement
     {
         _isHovered = false;
 
-        var mousePosition = Core.InputManager.GetMousePosition() * new Vector2(Core.ScreenWidth, Core.ScreenHeight);
+        var mouseState = Mouse.GetState();
+        var mousePosition = new Vector2(mouseState.X, mouseState.Y);
 
         if (_bounds.Contains(mousePosition))
         {
             _isHovered = true;
         }
 
-        if(_isHovered && Core.InputManager.GetButton("LeftMouse").IsPressed)
+        bool isMousePressed = mouseState.LeftButton == ButtonState.Pressed;
+        bool isMouseClick = isMousePressed && !_wasMousePressed;
+        _wasMousePressed = isMousePressed;
+
+        if(_isHovered && isMouseClick)
         {
             OnClick();
         }
