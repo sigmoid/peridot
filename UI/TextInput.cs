@@ -266,7 +266,12 @@ public class TextInput : IUIElement
             case Keys.C:
                 if (ctrl)
                 {
-                    // Copy to clipboard (future enhancement - requires platform-specific code)
+                    // Copy selected text to clipboard, or entire text if no selection
+                    string textToCopy = GetSelectedText();
+                    if (string.IsNullOrEmpty(textToCopy))
+                        textToCopy = _text; // Copy entire text if no selection
+                    
+                    Core.UISystem.SetClipboardText(textToCopy);
                 }
                 else
                 {
@@ -277,7 +282,26 @@ public class TextInput : IUIElement
             case Keys.V:
                 if (ctrl)
                 {
-                    // Paste from clipboard (future enhancement - requires platform-specific code)
+                    // Paste from clipboard
+                    string clipboardText = Core.UISystem.GetClipboardText();
+                    if (!string.IsNullOrEmpty(clipboardText))
+                    {
+                        // Remove any newlines for single-line text input
+                        clipboardText = clipboardText.Replace("\r\n", "").Replace("\n", "").Replace("\r", "");
+                        
+                        // Delete selected text first if any
+                        DeleteSelectedText();
+                        
+                        // Insert the clipboard text, respecting MaxLength
+                        foreach (char c in clipboardText)
+                        {
+                            if (char.IsControl(c))
+                                continue; // Skip control characters
+                            if (_text.Length >= MaxLength)
+                                break; // Stop if we've reached the maximum length
+                            InsertCharacter(c);
+                        }
+                    }
                 }
                 else
                 {
@@ -288,7 +312,28 @@ public class TextInput : IUIElement
             case Keys.X:
                 if (ctrl)
                 {
-                    // Cut to clipboard (future enhancement)
+                    // Cut selected text to clipboard, or entire text if no selection
+                    string textToCut = GetSelectedText();
+                    if (string.IsNullOrEmpty(textToCut))
+                        textToCut = _text; // Cut entire text if no selection
+                    
+                    if (!string.IsNullOrEmpty(textToCut))
+                    {
+                        Core.UISystem.SetClipboardText(textToCut);
+                        
+                        // Delete the cut text
+                        if (HasSelection())
+                        {
+                            DeleteSelectedText();
+                        }
+                        else
+                        {
+                            // Clear entire text
+                            _text = string.Empty;
+                            _cursorPosition = 0;
+                            OnTextChanged?.Invoke(_text);
+                        }
+                    }
                 }
                 else
                 {
@@ -553,6 +598,47 @@ public class TextInput : IUIElement
         _cursorPosition = Math.Max(0, Math.Min(position, _text.Length));
         _cursorBlinkTimer = 0f;
         _cursorVisible = true;
+    }
+
+    // Clipboard and selection helper methods
+    private string GetSelectedText()
+    {
+        if (!HasSelection())
+            return string.Empty;
+            
+        int start = Math.Min(_selectionStart, _selectionEnd);
+        int end = Math.Max(_selectionStart, _selectionEnd);
+        int length = end - start;
+        
+        if (start < 0 || start >= _text.Length || length <= 0)
+            return string.Empty;
+            
+        return _text.Substring(start, Math.Min(length, _text.Length - start));
+    }
+    
+    private bool HasSelection()
+    {
+        return _selectionStart != _selectionEnd && 
+               _selectionStart >= 0 && _selectionEnd >= 0 &&
+               _selectionStart <= _text.Length && _selectionEnd <= _text.Length;
+    }
+    
+    private void DeleteSelectedText()
+    {
+        if (!HasSelection())
+            return;
+            
+        int start = Math.Min(_selectionStart, _selectionEnd);
+        int end = Math.Max(_selectionStart, _selectionEnd);
+        int length = end - start;
+        
+        if (start >= 0 && start < _text.Length && length > 0)
+        {
+            _text = _text.Remove(start, Math.Min(length, _text.Length - start));
+            _cursorPosition = start;
+            _selectionStart = _selectionEnd = _cursorPosition;
+            OnTextChanged?.Invoke(_text);
+        }
     }
 
     public void Dispose()

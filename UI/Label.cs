@@ -68,6 +68,11 @@ public class Label : IUIElement
         }
     }
 
+    public void SetText(string text)
+    {
+        _text = text ?? string.Empty;
+    }
+
     public Rectangle GetBoundingBox()
     {
         return _bounds;

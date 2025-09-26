@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System.Xml.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -30,6 +31,11 @@ public class SpriteComponent : Component
         SetTexture(Core.TextureAtlas.GetRegion(defaultTexture));
     }
 
+    public SpriteComponent(Sprite sprite)
+    {
+        _sprite = sprite;
+    }
+
     public override void Initialize()
     {
         if (!string.IsNullOrEmpty(Texture))
@@ -53,7 +59,7 @@ public class SpriteComponent : Component
                 _sprite = new Sprite();
             }
         }
-        else
+        else if(_sprite == null)
         {
             _sprite = new Sprite();
         }
