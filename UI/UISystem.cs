@@ -175,7 +175,8 @@ public class UISystem
     {
         foreach (var element in _elements)
         {
-            element.Draw(spriteBatch);
+            if (element.IsVisible())
+                element.Draw(spriteBatch);
         }
     }
 }

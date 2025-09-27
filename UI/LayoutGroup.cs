@@ -42,7 +42,7 @@ public abstract class LayoutGroup : IUIElement
 
     protected abstract void UpdateChildPositions();
 
-    public virtual void Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
         foreach (var child in _children)
         {
@@ -50,7 +50,7 @@ public abstract class LayoutGroup : IUIElement
         }
     }
 
-    public virtual void Draw(SpriteBatch spriteBatch)
+    public override void Draw(SpriteBatch spriteBatch)
     {
         if (_drawBackground)
         {
@@ -63,7 +63,10 @@ public abstract class LayoutGroup : IUIElement
 
         foreach (var child in _children)
         {
-            child.Draw(spriteBatch);
+            if (child.IsVisible())
+            {
+                child.Draw(spriteBatch);
+            }
         }
     }
 
@@ -73,12 +76,12 @@ public abstract class LayoutGroup : IUIElement
         // but you can override this if needed
     }
 
-    public Rectangle GetBoundingBox()
+    public override Rectangle GetBoundingBox()
     {
         return _bounds;
     }
 
-    public virtual void SetBounds(Rectangle bounds)
+    public override void SetBounds(Rectangle bounds)
     {
         _bounds = bounds;
         UpdateChildPositions();

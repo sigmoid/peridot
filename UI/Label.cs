@@ -49,7 +49,7 @@ public class Label : IUIElement
         _pixel.SetData(new[] { Color.White });
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public override void Draw(SpriteBatch spriteBatch)
     {
         if (_drawBackground)
         {
@@ -73,7 +73,7 @@ public class Label : IUIElement
         _text = text ?? string.Empty;
     }
 
-    public Rectangle GetBoundingBox()
+    public override Rectangle GetBoundingBox()
     {
         return _bounds;
     }
@@ -83,12 +83,12 @@ public class Label : IUIElement
         // Labels typically don't handle clicks
     }
 
-    public void SetBounds(Rectangle bounds)
+    public override void SetBounds(Rectangle bounds)
     {
         _bounds = bounds;
     }
 
-    public void Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
         // Labels typically don't need updates
     }

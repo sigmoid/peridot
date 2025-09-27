@@ -34,7 +34,7 @@ public class Button : IUIElement
         _pixel.SetData(new[] { Color.White });
     }
 
-    public void Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
         _isHovered = false;
 
@@ -56,7 +56,7 @@ public class Button : IUIElement
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public override void Draw(SpriteBatch spriteBatch)
     {
         spriteBatch.Draw(_pixel, _bounds, _isHovered ? _hoverColor : _defaultColor);
 
@@ -74,12 +74,12 @@ public class Button : IUIElement
         _onClick?.Invoke();
     }
 
-    public Rectangle GetBoundingBox()
+    public override Rectangle GetBoundingBox()
     {
         return _bounds;
     }
 
-    public void SetBounds(Rectangle bounds)
+    public override void SetBounds(Rectangle bounds)
     {
         _bounds = bounds;
     }

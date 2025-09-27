@@ -63,7 +63,7 @@ public class HorizontalLayoutGroup : LayoutGroup
         foreach (var child in _children)
         {
             var childBounds = child.GetBoundingBox();
-            
+
             // Calculate Y position based on vertical alignment
             int childY = _verticalAlignment switch
             {

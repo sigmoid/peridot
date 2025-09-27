@@ -121,7 +121,7 @@ public class Slider : IUIElement
         Value = initialValue;
     }
 
-    public void Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
         var mouseState = Mouse.GetState();
         var mousePosition = new Vector2(mouseState.X, mouseState.Y);
@@ -243,7 +243,7 @@ public class Slider : IUIElement
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public override void Draw(SpriteBatch spriteBatch)
     {
         Rectangle trackBounds = GetTrackBounds();
         Rectangle fillBounds = GetFillBounds();
@@ -280,12 +280,12 @@ public class Slider : IUIElement
         spriteBatch.Draw(_pixel, handleBounds, handleDrawColor);
     }
 
-    public Rectangle GetBoundingBox()
+    public override Rectangle GetBoundingBox()
     {
         return _bounds;
     }
 
-    public void SetBounds(Rectangle bounds)
+    public override void SetBounds(Rectangle bounds)
     {
         _bounds = bounds;
     }

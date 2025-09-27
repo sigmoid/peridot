@@ -104,7 +104,7 @@ public class TextInput : IUIElement
         _previousMouseState = Mouse.GetState();
     }
 
-    public void Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
         var mouseState = Mouse.GetState();
         var mousePosition = new Vector2(mouseState.X, mouseState.Y);
@@ -493,7 +493,7 @@ public class TextInput : IUIElement
         }
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public override void Draw(SpriteBatch spriteBatch)
     {
         // Draw border
         Color currentBorderColor = _isFocused ? _focusedBorderColor : _borderColor;
@@ -570,12 +570,12 @@ public class TextInput : IUIElement
         spriteBatch.Draw(_pixel, cursorBounds, _cursorColor);
     }
 
-    public Rectangle GetBoundingBox()
+    public override Rectangle GetBoundingBox()
     {
         return _bounds;
     }
 
-    public void SetBounds(Rectangle bounds)
+    public override void SetBounds(Rectangle bounds)
     {
         _bounds = bounds;
     }
