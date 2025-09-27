@@ -47,7 +47,13 @@ public class Core : Game
 
     TestRunner _testRunner;
 
-    public Core(string title, int width, int height, bool fullScreen)
+    private static SpriteFont _defaultFont;
+
+    public static SpriteFont DefaultFont => _defaultFont;
+    
+    public static DeveloperConsole DeveloperConsole { get; private set; } = new DeveloperConsole();
+
+    public Core(string title, int width, int height, bool fullScreen, string defaultFont)
     {
 
         if (s_instance != null)
@@ -75,6 +81,8 @@ public class Core : Game
 
         TestRecorder = new TestRecorder();
         _testRunner = new TestRunner();
+
+        _defaultFont = Content.Load<SpriteFont>(defaultFont);
     }
 
     protected override void Initialize()
@@ -87,8 +95,11 @@ public class Core : Game
         Camera = new Camera2D(GraphicsDevice.Viewport);
 
         Physics = new PhysicsSystem(Gravity);
+        
+        DeveloperConsole.Initialize();
+        UISystem.AddElement(DeveloperConsole.GetRootElement());
 
-		base.Initialize();
+        base.Initialize();
     }
 
     protected override void LoadContent()
@@ -167,6 +178,11 @@ public class Core : Game
         // TODO: Implement test playback
         //TestRecorder.Update(gameTime);
 
+        if(keyboardState.IsKeyDown(Keys.OemTilde) && _previousKeyboardState.IsKeyUp(Keys.OemTilde))
+        {
+            DeveloperConsole.GetRootElement().SetVisibility(!DeveloperConsole.GetRootElement().IsVisible());
+        }   
+
         base.Update(gameTime);
 
         _previousKeyboardState = keyboardState;
@@ -182,7 +198,7 @@ public class Core : Game
         CurrentScene.Draw(SpriteBatch);
         SpriteBatch.End();
 
-        UIBatch.Begin(samplerState: SamplerState.PointClamp);
+        UIBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.Deferred);
         UISystem.Draw(UIBatch); 
         UIBatch.End();
 
