@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Peridot;
 
-public class Slider : IUIElement
+public class Slider : UIElement
 {
     private Rectangle _bounds;
     private float _value;
@@ -250,12 +250,12 @@ public class Slider : IUIElement
         Rectangle handleBounds = GetHandleBounds();
         
         // Draw track background
-        spriteBatch.Draw(_pixel, trackBounds, _trackColor);
+        spriteBatch.Draw(_pixel, trackBounds, null, _trackColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         
         // Draw fill
         if (fillBounds.Width > 0 && fillBounds.Height > 0)
         {
-            spriteBatch.Draw(_pixel, fillBounds, _fillColor);
+            spriteBatch.Draw(_pixel, fillBounds, null, _fillColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
         }
         
         // Draw handle
@@ -274,10 +274,10 @@ public class Slider : IUIElement
                 handleBounds.Width + _handleBorderSize * 2,
                 handleBounds.Height + _handleBorderSize * 2
             );
-            spriteBatch.Draw(_pixel, borderBounds, Color.Black);
+            spriteBatch.Draw(_pixel, borderBounds, null, Color.Black, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
         }
         
-        spriteBatch.Draw(_pixel, handleBounds, handleDrawColor);
+        spriteBatch.Draw(_pixel, handleBounds, null, handleDrawColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.02f);
     }
 
     public override Rectangle GetBoundingBox()

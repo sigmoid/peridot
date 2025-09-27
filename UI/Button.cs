@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Peridot;
 
-public class Button : IUIElement
+public class Button : UIElement
 { 
     private Rectangle _bounds;
     private string _text;
@@ -58,7 +58,7 @@ public class Button : IUIElement
 
     public override void Draw(SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(_pixel, _bounds, _isHovered ? _hoverColor : _defaultColor);
+        spriteBatch.Draw(_pixel, _bounds, null, _isHovered ? _hoverColor : _defaultColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
 
         var textSize = _font.MeasureString(_text);
         var textPosition = new Vector2(
@@ -66,7 +66,7 @@ public class Button : IUIElement
             _bounds.Y + (_bounds.Height - textSize.Y) / 2
         );
 
-        spriteBatch.DrawString(_font, _text, textPosition, _textColor);
+        spriteBatch.DrawString(_font, _text, textPosition, _textColor, 0, Vector2.Zero, 1.0f, SpriteEffects.None, GetActualOrder() + 0.01f);
     }
 
     public void OnClick()

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Peridot;
 
-public class Modal : IUIElement
+public class Modal : UIElement
 {
     private Rectangle _screenBounds;
     private Rectangle _modalBounds;
@@ -26,7 +26,7 @@ public class Modal : IUIElement
     private Color _borderColor;
     
     private Texture2D _pixel;
-    private List<IUIElement> _contentElements;
+    private List<UIElement> _contentElements;
     
     private Action _onClose;
     private bool _isClosable;
@@ -57,7 +57,7 @@ public class Modal : IUIElement
         _closeOnOverlayClick = closeOnOverlayClick;
         _borderThickness = 2;
         
-        _contentElements = new List<IUIElement>();
+        _contentElements = new List<UIElement>();
         
         // Create pixel texture for drawing
         _pixel = new Texture2D(Core.GraphicsDevice, 1, 1);
@@ -104,13 +104,14 @@ public class Modal : IUIElement
                 Color.White,
                 () => Close()
             );
+            _closeButton.SetParent(this);
         }
     }
 
-    public void AddContentElement(IUIElement element)
+    public void AddContentElement(UIElement element)
     {
         _contentElements.Add(element);
-        
+
         // Adjust element position to be relative to content area if needed
         var elementBounds = element.GetBoundingBox();
         if (elementBounds.X < _contentBounds.X || elementBounds.Y < _contentBounds.Y)
@@ -124,9 +125,10 @@ public class Modal : IUIElement
             );
             element.SetBounds(newBounds);
         }
+        element.SetParent(this);
     }
 
-    public void RemoveContentElement(IUIElement element)
+    public void RemoveContentElement(UIElement element)
     {
         _contentElements.Remove(element);
     }
@@ -136,7 +138,7 @@ public class Modal : IUIElement
         _contentElements.Clear();
     }
 
-    public IReadOnlyList<IUIElement> ContentElements => _contentElements;
+    public IReadOnlyList<UIElement> ContentElements => _contentElements;
 
     public override void Update(float deltaTime)
     {
@@ -181,17 +183,17 @@ public class Modal : IUIElement
         if (!IsVisible()) return;
 
         // Draw overlay background
-        spriteBatch.Draw(_pixel, _screenBounds, _overlayColor);
+        spriteBatch.Draw(_pixel, _screenBounds, null, _overlayColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         
         // Draw modal border
         spriteBatch.Draw(_pixel, new Rectangle(_modalBounds.X - _borderThickness, _modalBounds.Y - _borderThickness, 
-                                             _modalBounds.Width + (_borderThickness * 2), _modalBounds.Height + (_borderThickness * 2)), _borderColor);
+                                             _modalBounds.Width + (_borderThickness * 2), _modalBounds.Height + (_borderThickness * 2)), null, _borderColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
         
         // Draw modal background
-        spriteBatch.Draw(_pixel, _modalBounds, _modalBackgroundColor);
+        spriteBatch.Draw(_pixel, _modalBounds, null, _modalBackgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.02f);
         
         // Draw title bar
-        spriteBatch.Draw(_pixel, _titleBarBounds, _titleBarColor);
+        spriteBatch.Draw(_pixel, _titleBarBounds, null, _titleBarColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
         
         // Draw title text
         if (!string.IsNullOrEmpty(_title))

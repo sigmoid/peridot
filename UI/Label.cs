@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Peridot;
 
-public class Label : IUIElement
+public class Label : UIElement
 {
     private string _text;
     private Rectangle _bounds;
@@ -14,26 +14,26 @@ public class Label : IUIElement
     private Texture2D _pixel;
     private bool _drawBackground;
 
-    public string Text 
-    { 
-        get => _text; 
-        set => _text = value ?? string.Empty; 
+    public string Text
+    {
+        get => _text;
+        set => _text = value ?? string.Empty;
     }
-    
-    public Color TextColor 
-    { 
-        get => _textColor; 
-        set => _textColor = value; 
+
+    public Color TextColor
+    {
+        get => _textColor;
+        set => _textColor = value;
     }
-    
-    public Color BackgroundColor 
-    { 
-        get => _backgroundColor; 
-        set 
-        { 
-            _backgroundColor = value; 
+
+    public Color BackgroundColor
+    {
+        get => _backgroundColor;
+        set
+        {
+            _backgroundColor = value;
             _drawBackground = value != Color.Transparent;
-        } 
+        }
     }
 
     public Label(Rectangle bounds, string text, SpriteFont font, Color textColor, Color? backgroundColor = null)
@@ -53,7 +53,7 @@ public class Label : IUIElement
     {
         if (_drawBackground)
         {
-            spriteBatch.Draw(_pixel, _bounds, _backgroundColor);
+            spriteBatch.Draw(_pixel, _bounds, null, _backgroundColor, 0.0f, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         }
 
         if (!string.IsNullOrEmpty(_text))
@@ -64,7 +64,7 @@ public class Label : IUIElement
                 _bounds.Y + (_bounds.Height - textSize.Y) / 2
             );
 
-            spriteBatch.DrawString(_font, _text, textPosition, _textColor);
+            spriteBatch.DrawString(_font, _text, textPosition, _textColor, 0, Vector2.Zero, 1.0f, SpriteEffects.None, GetActualOrder() + 0.01f);
         }
     }
 

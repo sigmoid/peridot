@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Peridot;
 
-public class TextInput : IUIElement
+public class TextInput : UIElement
 {
     private Rectangle _bounds;
     private string _text;
@@ -497,7 +497,7 @@ public class TextInput : IUIElement
     {
         // Draw border
         Color currentBorderColor = _isFocused ? _focusedBorderColor : _borderColor;
-        spriteBatch.Draw(_pixel, _bounds, currentBorderColor);
+        spriteBatch.Draw(_pixel, _bounds, null, currentBorderColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         
         // Draw background
         var backgroundBounds = new Rectangle(
@@ -506,7 +506,7 @@ public class TextInput : IUIElement
             _bounds.Width - 2 * _borderWidth,
             _bounds.Height - 2 * _borderWidth
         );
-        spriteBatch.Draw(_pixel, backgroundBounds, _backgroundColor);
+        spriteBatch.Draw(_pixel, backgroundBounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
         
         var textBounds = GetTextBounds();
         
@@ -523,7 +523,7 @@ public class TextInput : IUIElement
                 textBounds.Y + (textBounds.Height - textSize.Y) / 2
             );
             
-            spriteBatch.DrawString(_font, displayText, textPosition, displayColor);
+            spriteBatch.DrawString(_font, displayText, textPosition, displayColor, 0, Vector2.Zero, 1.0f, SpriteEffects.None, GetActualOrder() + 0.02f);
         }
         
         // Draw cursor
@@ -545,7 +545,7 @@ public class TextInput : IUIElement
                 1,
                 (int)textSize.Y
             );
-            spriteBatch.Draw(_pixel, cursorBounds, _cursorColor);
+            spriteBatch.Draw(_pixel, cursorBounds, null, _cursorColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
         }
     }
 
@@ -567,7 +567,7 @@ public class TextInput : IUIElement
             (int)fullTextSize.Y
         );
         
-        spriteBatch.Draw(_pixel, cursorBounds, _cursorColor);
+        spriteBatch.Draw(_pixel, cursorBounds, null, _cursorColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
     }
 
     public override Rectangle GetBoundingBox()

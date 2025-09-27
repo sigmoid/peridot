@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Peridot;
 
-public class UIImage : IUIElement
+public class UIImage : UIElement
 {
     private Texture2D _texture;
     private Rectangle _bounds;

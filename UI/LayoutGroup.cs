@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-public abstract class LayoutGroup : IUIElement
+public abstract class LayoutGroup : UIElement
 {
     protected Rectangle _bounds;
     protected int _spacing;
-    protected List<IUIElement> _children;
+    protected List<UIElement> _children;
     protected Color _backgroundColor;
     protected bool _drawBackground;
 
@@ -16,18 +16,19 @@ public abstract class LayoutGroup : IUIElement
     {
         _bounds = bounds;
         _spacing = spacing;
-        _children = new List<IUIElement>();
+        _children = new List<UIElement>();
         _backgroundColor = backgroundColor ?? Color.Transparent;
         _drawBackground = backgroundColor.HasValue;
     }
 
-    public virtual void AddChild(IUIElement child)
+    public virtual void AddChild(UIElement child)
     {
         _children.Add(child);
+        child.SetParent(this);
         UpdateChildPositions();
     }
 
-    public virtual void RemoveChild(IUIElement child)
+    public virtual void RemoveChild(UIElement child)
     {
         _children.Remove(child);
         UpdateChildPositions();
@@ -38,7 +39,7 @@ public abstract class LayoutGroup : IUIElement
         _children.Clear();
     }
 
-    public IReadOnlyList<IUIElement> Children => _children;
+    public IReadOnlyList<UIElement> Children => _children;
 
     protected abstract void UpdateChildPositions();
 
@@ -57,7 +58,7 @@ public abstract class LayoutGroup : IUIElement
             // Create a 1x1 white pixel texture for drawing backgrounds
             var pixel = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
-            spriteBatch.Draw(pixel, _bounds, _backgroundColor);
+            spriteBatch.Draw(pixel, _bounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
             pixel.Dispose();
         }
 

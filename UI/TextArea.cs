@@ -25,7 +25,7 @@ using Peridot;
 /// textArea.ReadOnly = false; // Enable editing
 /// </summary>
 
-public class TextArea : IUIElement
+public class TextArea : UIElement
 {
     private Rectangle _bounds;
     private string _text;
@@ -1233,7 +1233,7 @@ public class TextArea : IUIElement
         {
             currentBorderColor = Color.Lerp(currentBorderColor, Color.Gray, 0.3f);
         }
-        spriteBatch.Draw(_pixel, _bounds, currentBorderColor);
+        spriteBatch.Draw(_pixel, _bounds, null, currentBorderColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         
         // Draw background
         var backgroundBounds = new Rectangle(
@@ -1242,7 +1242,7 @@ public class TextArea : IUIElement
             _bounds.Width - 2 * _borderWidth,
             _bounds.Height - 2 * _borderWidth
         );
-        spriteBatch.Draw(_pixel, backgroundBounds, _backgroundColor);
+        spriteBatch.Draw(_pixel, backgroundBounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
         
         var textBounds = GetTextBounds();
         
@@ -1281,7 +1281,7 @@ public class TextArea : IUIElement
             if (!string.IsNullOrEmpty(line))
             {
                 Color displayColor = ReadOnly ? Color.Lerp(_textColor, Color.Gray, 0.2f) : _textColor;
-                spriteBatch.DrawString(_font, line, position, displayColor);
+                spriteBatch.DrawString(_font, line, position, displayColor, 0, Vector2.Zero, 1f, SpriteEffects.None, GetActualOrder() + 0.02f);
             }
         }
     }
@@ -1289,7 +1289,7 @@ public class TextArea : IUIElement
     private void DrawPlaceholder(SpriteBatch spriteBatch, Rectangle textBounds)
     {
         var position = new Vector2(textBounds.X, textBounds.Y);
-        spriteBatch.DrawString(_font, _placeholder, position, _placeholderColor);
+        spriteBatch.DrawString(_font, _placeholder, position, _placeholderColor, 0, Vector2.Zero, 1f, SpriteEffects.None, GetActualOrder() + 0.02f);
     }
 
     private void DrawCursor(SpriteBatch spriteBatch, Rectangle textBounds)
@@ -1312,7 +1312,7 @@ public class TextArea : IUIElement
                 (int)_lineHeight
             );
             
-            spriteBatch.Draw(_pixel, cursorBounds, _cursorColor);
+            spriteBatch.Draw(_pixel, cursorBounds, null, _cursorColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
         }
     }
 

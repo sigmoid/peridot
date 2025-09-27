@@ -32,9 +32,11 @@ public class DeveloperConsole
         layout.AddChild(inputLayout);
 
         _rootElement.AddChild(layout);
+        _rootElement.Order = 0.9f;
+        _rootElement.SetVisibility(false);
     }
     
-    public IUIElement GetRootElement()
+    public UIElement GetRootElement()
     {
         return _rootElement;
     }

@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 public class UISystem
 {
-    private List<IUIElement> _elements;
+    private List<UIElement> _elements;
     private string _fallbackClipboard = string.Empty;
 
     // Windows Clipboard API
@@ -45,7 +45,7 @@ public class UISystem
 
     public UISystem()
     {
-        _elements = new List<IUIElement>();
+        _elements = new List<UIElement>();
     }
 
     // Clipboard functionality with Windows API
@@ -154,12 +154,12 @@ public class UISystem
         }
     }
 
-    public void AddElement(IUIElement element)
+    public void AddElement(UIElement element)
     {
         _elements.Add(element);
     }
 
-    public void RemoveElement(IUIElement element)
+    public void RemoveElement(UIElement element)
     {
         _elements.Remove(element);
     }

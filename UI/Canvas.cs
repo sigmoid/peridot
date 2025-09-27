@@ -10,10 +10,10 @@ using Peridot;
 /// Elements maintain their absolute positions and the Canvas simply manages their visibility,
 /// updates, and drawing as a group. Optionally provides clipping to canvas bounds.
 /// </summary>
-public class Canvas : IUIElement
+public class Canvas : UIElement
 {
     private Rectangle _bounds;
-    private List<IUIElement> _children;
+    private List<UIElement> _children;
     private Color _backgroundColor;
     private bool _drawBackground;
     private bool _clipToBounds;
@@ -22,7 +22,7 @@ public class Canvas : IUIElement
     /// <summary>
     /// Gets the children elements in this canvas.
     /// </summary>
-    public IReadOnlyList<IUIElement> Children => _children;
+    public IReadOnlyList<UIElement> Children => _children;
 
     /// <summary>
     /// Gets or sets whether child elements should be clipped to the canvas bounds.
@@ -36,7 +36,7 @@ public class Canvas : IUIElement
     public Canvas(Rectangle bounds, Color? backgroundColor = null, bool clipToBounds = false)
     {
         _bounds = bounds;
-        _children = new List<IUIElement>();
+        _children = new List<UIElement>();
         _backgroundColor = backgroundColor ?? Color.Transparent;
         _drawBackground = backgroundColor.HasValue && backgroundColor != Color.Transparent;
         _clipToBounds = clipToBounds;
@@ -49,18 +49,19 @@ public class Canvas : IUIElement
     /// <summary>
     /// Adds a child element to the canvas. The element keeps its current position.
     /// </summary>
-    public virtual void AddChild(IUIElement child)
+    public virtual void AddChild(UIElement child)
     {
         if (child != null && !_children.Contains(child))
         {
             _children.Add(child);
+            child.SetParent(this);
         }
     }
 
     /// <summary>
     /// Adds a child element at a specific position relative to the canvas.
     /// </summary>
-    public virtual void AddChild(IUIElement child, Vector2 position)
+    public virtual void AddChild(UIElement child, Vector2 position)
     {
         if (child != null)
         {
@@ -79,7 +80,7 @@ public class Canvas : IUIElement
     /// <summary>
     /// Adds a child element at a specific position and size relative to the canvas.
     /// </summary>
-    public virtual void AddChild(IUIElement child, Rectangle relativeBounds)
+    public virtual void AddChild(UIElement child, Rectangle relativeBounds)
     {
         if (child != null)
         {
@@ -97,7 +98,7 @@ public class Canvas : IUIElement
     /// <summary>
     /// Removes a child element from the canvas.
     /// </summary>
-    public virtual void RemoveChild(IUIElement child)
+    public virtual void RemoveChild(UIElement child)
     {
         _children.Remove(child);
     }
@@ -113,7 +114,7 @@ public class Canvas : IUIElement
     /// <summary>
     /// Finds the first child element at the specified position (in screen coordinates).
     /// </summary>
-    public IUIElement FindChildAt(Vector2 position)
+    public UIElement FindChildAt(Vector2 position)
     {
         // Search in reverse order to find the topmost element
         for (int i = _children.Count - 1; i >= 0; i--)
@@ -130,9 +131,9 @@ public class Canvas : IUIElement
     /// <summary>
     /// Gets all child elements at the specified position (in screen coordinates).
     /// </summary>
-    public List<IUIElement> FindChildrenAt(Vector2 position)
+    public List<UIElement> FindChildrenAt(Vector2 position)
     {
-        var result = new List<IUIElement>();
+        var result = new List<UIElement>();
         foreach (var child in _children)
         {
             if (child.IsVisible() && child.GetBoundingBox().Contains(position))
@@ -164,7 +165,7 @@ public class Canvas : IUIElement
     /// <summary>
     /// Brings a child element to the front (drawn last, appears on top).
     /// </summary>
-    public void BringChildToFront(IUIElement child)
+    public void BringChildToFront(UIElement child)
     {
         if (_children.Remove(child))
         {
@@ -175,7 +176,7 @@ public class Canvas : IUIElement
     /// <summary>
     /// Sends a child element to the back (drawn first, appears behind others).
     /// </summary>
-    public void SendChildToBack(IUIElement child)
+    public void SendChildToBack(UIElement child)
     {
         if (_children.Remove(child))
         {
@@ -200,28 +201,10 @@ public class Canvas : IUIElement
     {
         if (!IsVisible()) return;
 
-        // Store original scissor state if clipping
-        Rectangle? originalScissor = null;
-        if (_clipToBounds && spriteBatch.GraphicsDevice.ScissorRectangle != _bounds)
-        {
-            originalScissor = spriteBatch.GraphicsDevice.ScissorRectangle;
-            
-            // End the current batch to change render state
-            spriteBatch.End();
-            
-            // Set scissor rectangle for clipping
-            spriteBatch.GraphicsDevice.ScissorRectangle = _bounds;
-            
-            // Restart batch with scissor test enabled
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, 
-                            SamplerState.PointClamp, DepthStencilState.None, 
-                            new RasterizerState { ScissorTestEnable = true });
-        }
-
         // Draw background if enabled
         if (_drawBackground)
         {
-            spriteBatch.Draw(_pixel, _bounds, _backgroundColor);
+            spriteBatch.Draw(_pixel, _bounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         }
 
         // Draw all visible children
@@ -235,16 +218,6 @@ public class Canvas : IUIElement
                     child.Draw(spriteBatch);
                 }
             }
-        }
-
-        // Restore original scissor state if we changed it
-        if (originalScissor.HasValue)
-        {
-            spriteBatch.End();
-            spriteBatch.GraphicsDevice.ScissorRectangle = originalScissor.Value;
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, 
-                            SamplerState.PointClamp, DepthStencilState.None, 
-                            RasterizerState.CullCounterClockwise);
         }
     }
 

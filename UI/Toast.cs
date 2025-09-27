@@ -21,7 +21,7 @@ using Peridot;
 /// // Add to UI system
 /// uiSystem.AddElement(toast);
 /// </summary>
-public class Toast : IUIElement
+public class Toast : UIElement
 {
     public enum ToastType
     {
@@ -250,7 +250,7 @@ public class Toast : IUIElement
         Color borderColorWithAlpha = _borderColor * _alpha;
 
         // Draw border
-        spriteBatch.Draw(_pixel, _bounds, borderColorWithAlpha);
+        spriteBatch.Draw(_pixel, _bounds, null, borderColorWithAlpha, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
 
         // Draw background
         var backgroundBounds = new Rectangle(
@@ -259,7 +259,7 @@ public class Toast : IUIElement
             _bounds.Width - (_borderWidth * 2),
             _bounds.Height - (_borderWidth * 2)
         );
-        spriteBatch.Draw(_pixel, backgroundBounds, backgroundColorWithAlpha);
+        spriteBatch.Draw(_pixel, backgroundBounds, null, backgroundColorWithAlpha, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
 
         // Draw text
         if (!string.IsNullOrEmpty(_message))
@@ -269,7 +269,7 @@ public class Toast : IUIElement
                 _bounds.Y + _borderWidth + _padding
             );
 
-            spriteBatch.DrawString(_font, _message, textPosition, textColorWithAlpha);
+            spriteBatch.DrawString(_font, _message, textPosition, textColorWithAlpha, 0, Vector2.Zero, 1.0f, SpriteEffects.None, GetActualOrder() + 0.02f);
         }
     }
 
