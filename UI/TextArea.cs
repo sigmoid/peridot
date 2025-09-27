@@ -88,9 +88,10 @@ public class TextArea : IUIElement
         get => _text; 
         set 
         { 
-            if (_text != value)
+            string filteredValue = FilterUnsupportedCharacters(value ?? string.Empty);
+            if (_text != filteredValue)
             {
-                _text = value ?? string.Empty;
+                _text = filteredValue;
                 UpdateLines();
                 ValidateCursorPosition();
                 OnTextChanged?.Invoke(_text);
@@ -186,6 +187,87 @@ public class TextArea : IUIElement
         _previousMouseState = Mouse.GetState();
         
         UpdateLines();
+    }
+
+    /// <summary>
+    /// Checks if a character is supported by the current font.
+    /// This prevents runtime errors when the font doesn't contain certain Unicode characters.
+    /// </summary>
+    private bool IsCharacterSupported(char character)
+    {
+        // Common characters that are usually safe
+        if (character >= 32 && character <= 126) // Basic ASCII printable characters
+            return true;
+        
+        if (character == '\t' || character == '\n' || character == '\r') // Control characters we handle
+            return true;
+        
+        // For other characters, we need to check if the font contains them
+        // This is a simplified check - in a real implementation you might want to cache this
+        try
+        {
+            var glyphs = _font.Characters;
+            return glyphs.Contains(character);
+        }
+        catch
+        {
+            // If we can't check, assume it's not supported to be safe
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Filters text to remove or replace characters that aren't supported by the current font.
+    /// This prevents rendering errors and exceptions.
+    /// </summary>
+    private string FilterUnsupportedCharacters(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        var filtered = new System.Text.StringBuilder(input.Length);
+        
+        foreach (char c in input)
+        {
+            if (IsCharacterSupported(c))
+            {
+                filtered.Append(c);
+            }
+            else
+            {
+                // Replace unsupported characters with safe alternatives
+                switch (c)
+                {
+                    case '\u2022': // Bullet point •
+                        filtered.Append('-');
+                        break;
+                    case '\u2013': // En dash –
+                    case '\u2014': // Em dash —
+                        filtered.Append('-');
+                        break;
+                    case '\u2018': // Left single quotation mark '
+                    case '\u2019': // Right single quotation mark '
+                        filtered.Append('\'');
+                        break;
+                    case '\u201C': // Left double quotation mark "
+                    case '\u201D': // Right double quotation mark "
+                        filtered.Append('"');
+                        break;
+                    case '\u2026': // Horizontal ellipsis …
+                        filtered.Append("...");
+                        break;
+                    default:
+                        // For other unsupported characters, we can either:
+                        // 1. Skip them (do nothing)
+                        // 2. Replace with '?' 
+                        // 3. Replace with space
+                        // Here we'll skip them to avoid visual clutter
+                        break;
+                }
+            }
+        }
+        
+        return filtered.ToString();
     }
 
     private void UpdateLines()
@@ -858,6 +940,42 @@ public class TextArea : IUIElement
     {
         if (_text.Length >= MaxLength) return;
         
+        // Check if the character is supported by the font
+        if (!IsCharacterSupported(character))
+        {
+            // Try to find a suitable replacement
+            string replacement = character switch
+            {
+                '\u2022' => "-", // Bullet point •
+                '\u2013' or '\u2014' => "-", // En dash – or Em dash —
+                '\u2018' or '\u2019' => "'", // Single quotes ' '
+                '\u201C' or '\u201D' => "\"", // Double quotes " "
+                '\u2026' => "...", // Ellipsis …
+                _ => null // No replacement, skip the character
+            };
+            
+            if (replacement != null)
+            {
+                // Insert the replacement string instead
+                foreach (char c in replacement)
+                {
+                    if (_text.Length >= MaxLength) break;
+                    if (IsCharacterSupported(c))
+                    {
+                        if (_hasSelection)
+                        {
+                            DeleteSelection();
+                        }
+                        _lines[_cursorLine] = _lines[_cursorLine].Insert(_cursorColumn, c.ToString());
+                        _cursorColumn++;
+                    }
+                }
+                UpdateTextFromLines();
+            }
+            // If no replacement, silently ignore the unsupported character
+            return;
+        }
+        
         if (_hasSelection)
         {
             DeleteSelection();
@@ -1341,6 +1459,48 @@ public class TextArea : IUIElement
             return _lines[lineNumber];
         }
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Tests if the given text would be properly handled by the character filtering.
+    /// Returns the filtered version of the text that would actually be displayed.
+    /// Useful for debugging font compatibility issues.
+    /// </summary>
+    public string TestCharacterFiltering(string input)
+    {
+        return FilterUnsupportedCharacters(input);
+    }
+
+    /// <summary>
+    /// Gets information about which characters in the input text are not supported by the current font.
+    /// Returns a list of unsupported characters and their positions.
+    /// </summary>
+    public List<(char Character, int Position, string Suggestion)> GetUnsupportedCharacters(string input)
+    {
+        var unsupported = new List<(char, int, string)>();
+        
+        if (string.IsNullOrEmpty(input))
+            return unsupported;
+            
+        for (int i = 0; i < input.Length; i++)
+        {
+            char c = input[i];
+            if (!IsCharacterSupported(c))
+            {
+                string suggestion = c switch
+                {
+                    '\u2022' => "- (hyphen)",
+                    '\u2013' or '\u2014' => "- (hyphen)",
+                    '\u2018' or '\u2019' => "' (straight apostrophe)",
+                    '\u201C' or '\u201D' => "\" (straight quotes)",
+                    '\u2026' => "... (three dots)",
+                    _ => "(character will be skipped)"
+                };
+                unsupported.Add((c, i, suggestion));
+            }
+        }
+        
+        return unsupported;
     }
 
     public void Dispose()

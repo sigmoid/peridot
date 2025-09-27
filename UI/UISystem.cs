@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -165,18 +166,30 @@ public class UISystem
 
     public void Update(float deltaTime)
     {
-        foreach (var element in _elements)
+        // Use ToList() to avoid collection modification during iteration
+        // This handles cases where UI elements add/remove other elements during their Update() calls
+        var elementsToUpdate = _elements.ToList();
+        foreach (var element in elementsToUpdate)
         {
-            element.Update(deltaTime);
+            // Check if element is still in the collection (it may have been removed during iteration)
+            if (_elements.Contains(element))
+            {
+                element.Update(deltaTime);
+            }
         }
     }
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        foreach (var element in _elements)
+        // Use ToList() to avoid collection modification during iteration
+        var elementsToDraw = _elements.ToList();
+        foreach (var element in elementsToDraw)
         {
-            if (element.IsVisible())
+            // Check if element is still in the collection and is visible
+            if (_elements.Contains(element) && element.IsVisible())
+            {
                 element.Draw(spriteBatch);
+            }
         }
     }
 }
