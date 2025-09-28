@@ -39,7 +39,7 @@ public class TextArea : UIElement
     private Color _cursorColor;
     private Color _selectionColor;
     private Texture2D _pixel;
-    
+
     // Multi-line text handling
     private List<string> _lines;
     private List<string> _wrappedLines;
@@ -47,17 +47,17 @@ public class TextArea : UIElement
     private int _cursorColumn;
     private float _lineHeight;
     private bool _wordWrap;
-    
+
     // Scrolling
     private int _scrollOffsetY;
     private int _maxVisibleLines;
-    
+
     // Input state
     private bool _isFocused;
     private float _cursorBlinkTimer;
     private bool _cursorVisible;
     private const float CURSOR_BLINK_INTERVAL = 0.5f;
-    
+
     // Keyboard state tracking
     private KeyboardState _previousKeyboardState;
     private MouseState _previousMouseState;
@@ -65,29 +65,38 @@ public class TextArea : UIElement
     private Keys _repeatingKey;
     private const float KEY_REPEAT_DELAY = 0.5f;
     private const float KEY_REPEAT_INTERVAL = 0.05f;
-    
+
     // Selection
     private int _selectionStartLine;
     private int _selectionStartColumn;
     private int _selectionEndLine;
     private int _selectionEndColumn;
     private bool _hasSelection;
-    
+
     // Styling
     private int _padding;
     private int _borderWidth;
-    
+
+    // Scrollbar
+    private Slider _scrollbar;
+    private bool _showScrollbar;
+    private int _scrollbarWidth;
+    private Color _scrollbarTrackColor;
+    private Color _scrollbarThumbColor;
+    private Color _scrollbarThumbHoverColor;
+    private Color _scrollbarThumbPressedColor;
+
     // Events
     public event Action<string> OnTextChanged;
     public event Action OnFocusGained;
     public event Action OnFocusLost;
-    
+
     // Properties
-    public string Text 
-    { 
-        get => _text; 
-        set 
-        { 
+    public string Text
+    {
+        get => _text;
+        set
+        {
             string filteredValue = FilterUnsupportedCharacters(value ?? string.Empty);
             if (_text != filteredValue)
             {
@@ -96,30 +105,36 @@ public class TextArea : UIElement
                 ValidateCursorPosition();
                 OnTextChanged?.Invoke(_text);
             }
-        } 
+        }
     }
-    
-    public string Placeholder 
-    { 
-        get => _placeholder; 
-        set => _placeholder = value ?? string.Empty; 
+
+    public string Placeholder
+    {
+        get => _placeholder;
+        set => _placeholder = value ?? string.Empty;
     }
-    
+
     public bool IsFocused => _isFocused;
-    public bool WordWrap 
-    { 
-        get => _wordWrap; 
-        set 
-        { 
+    public bool WordWrap
+    {
+        get => _wordWrap;
+        set
+        {
             if (_wordWrap != value)
             {
                 _wordWrap = value;
                 UpdateWrappedLines();
             }
-        } 
+        }
     }
-    
+
     public int MaxLength { get; set; } = int.MaxValue;
+
+    /// <summary>
+    /// Gets whether the scrollbar is currently visible.
+    /// </summary>
+    public bool IsScrollbarVisible => _showScrollbar;
+
     /// <summary>
     /// Gets or sets whether the TextArea is read-only. When true:
     /// - Text cannot be edited through user input
@@ -146,10 +161,14 @@ public class TextArea : UIElement
     /// <param name="focusedBorderColor">Border color when focused (default: CornflowerBlue)</param>
     /// <param name="padding">Internal padding (default: 8)</param>
     /// <param name="borderWidth">Border width (default: 2)</param>
-    public TextArea(Rectangle bounds, SpriteFont font, string placeholder = "", 
-        bool wordWrap = true, bool readOnly = false, Color? backgroundColor = null, Color? textColor = null, 
+    /// <param name="scrollbarWidth">Width of the scrollbar when visible (default: 16)</param>
+    /// <param name="scrollbarTrackColor">Color of the scrollbar track (default: LightGray)</param>
+    /// <param name="scrollbarThumbColor">Color of the scrollbar thumb (default: Gray)</param>
+    public TextArea(Rectangle bounds, SpriteFont font, string placeholder = "",
+        bool wordWrap = true, bool readOnly = false, Color? backgroundColor = null, Color? textColor = null,
         Color? borderColor = null, Color? focusedBorderColor = null,
-        int padding = 8, int borderWidth = 2)
+        int padding = 8, int borderWidth = 2, int scrollbarWidth = 16,
+        Color? scrollbarTrackColor = null, Color? scrollbarThumbColor = null)
     {
         _bounds = bounds;
         _font = font ?? throw new ArgumentNullException(nameof(font));
@@ -166,27 +185,40 @@ public class TextArea : UIElement
         _selectionColor = Color.CornflowerBlue * 0.3f;
         _padding = padding;
         _borderWidth = borderWidth;
-        
+
+        // Initialize scrollbar properties
+        _scrollbarWidth = scrollbarWidth;
+        _scrollbarTrackColor = scrollbarTrackColor ?? Color.DarkGray;
+        _scrollbarThumbColor = scrollbarThumbColor ?? Color.CornflowerBlue;
+        _scrollbarThumbHoverColor = Color.Lerp(_scrollbarThumbColor, Color.White, 0.3f);
+        _scrollbarThumbPressedColor = Color.Lerp(_scrollbarThumbColor, Color.Black, 0.3f);
+        _showScrollbar = false;
+
         _lines = new List<string>();
         _wrappedLines = new List<string>();
         _cursorLine = 0;
         _cursorColumn = 0;
         _scrollOffsetY = 0;
-        
+
         _lineHeight = _font.LineSpacing;
         CalculateMaxVisibleLines();
-        
+
         _cursorBlinkTimer = 0f;
         _cursorVisible = true;
-        
+
         // Create pixel texture for drawing
         _pixel = new Texture2D(Core.GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
-        
+
         _previousKeyboardState = Keyboard.GetState();
         _previousMouseState = Mouse.GetState();
-        
+
+        // Initialize scrollbar (will be properly positioned later)
+        InitializeScrollbar();
+
         UpdateLines();
+        // Force initial scrollbar update after lines are set up
+        UpdateScrollbar();
     }
 
     /// <summary>
@@ -198,10 +230,10 @@ public class TextArea : UIElement
         // Common characters that are usually safe
         if (character >= 32 && character <= 126) // Basic ASCII printable characters
             return true;
-        
+
         if (character == '\t' || character == '\n' || character == '\r') // Control characters we handle
             return true;
-        
+
         // For other characters, we need to check if the font contains them
         // This is a simplified check - in a real implementation you might want to cache this
         try
@@ -226,7 +258,7 @@ public class TextArea : UIElement
             return input;
 
         var filtered = new System.Text.StringBuilder(input.Length);
-        
+
         foreach (char c in input)
         {
             if (IsCharacterSupported(c))
@@ -266,7 +298,7 @@ public class TextArea : UIElement
                 }
             }
         }
-        
+
         return filtered.ToString();
     }
 
@@ -291,28 +323,28 @@ public class TextArea : UIElement
             }
             _lines.AddRange(normalizedLines);
         }
-        
+
         if (_lines.Count == 0)
         {
             _lines.Add(string.Empty);
         }
-        
+
         UpdateWrappedLines();
     }
 
     private void UpdateWrappedLines()
     {
         _wrappedLines.Clear();
-        
+
         if (!_wordWrap)
         {
             _wrappedLines.AddRange(_lines);
             return;
         }
-        
+
         var textBounds = GetTextBounds();
         float maxWidth = textBounds.Width;
-        
+
         foreach (string line in _lines)
         {
             if (string.IsNullOrEmpty(line))
@@ -320,29 +352,32 @@ public class TextArea : UIElement
                 _wrappedLines.Add(string.Empty);
                 continue;
             }
-            
+
             var wrappedLinesForThisLine = WrapLine(line, maxWidth);
             _wrappedLines.AddRange(wrappedLinesForThisLine);
         }
+
+        // Update scrollbar after wrapped lines change
+        UpdateScrollbar();
     }
 
     private List<string> WrapLine(string line, float maxWidth)
     {
         var result = new List<string>();
-        
+
         if (_font.MeasureString(line).X <= maxWidth)
         {
             result.Add(line);
             return result;
         }
-        
+
         var words = line.Split(' ');
         var currentLine = string.Empty;
-        
+
         foreach (string word in words)
         {
             string testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-            
+
             if (_font.MeasureString(testLine).X <= maxWidth)
             {
                 currentLine = testLine;
@@ -362,12 +397,12 @@ public class TextArea : UIElement
                 }
             }
         }
-        
+
         if (!string.IsNullOrEmpty(currentLine))
         {
             result.Add(currentLine);
         }
-        
+
         return result;
     }
 
@@ -375,7 +410,7 @@ public class TextArea : UIElement
     {
         var result = new List<string>();
         var currentPart = string.Empty;
-        
+
         foreach (char c in word)
         {
             string testPart = currentPart + c;
@@ -392,13 +427,102 @@ public class TextArea : UIElement
                 currentPart = c.ToString();
             }
         }
-        
+
         if (!string.IsNullOrEmpty(currentPart))
         {
             result.Add(currentPart);
         }
-        
+
         return result;
+    }
+
+    private void InitializeScrollbar()
+    {
+        // Create scrollbar with initial bounds (will be updated in UpdateScrollbar)
+        var scrollbarBounds = new Rectangle(0, 0, _scrollbarWidth, 100);
+        _scrollbar = new Slider(
+            scrollbarBounds,
+            minValue: 0f,
+            maxValue: 1f,
+            initialValue: 0f,
+            step: 0f,
+            isHorizontal: false,
+            trackColor: _scrollbarTrackColor,
+            fillColor: Color.Transparent, // We don't need fill for scrollbar
+            handleColor: _scrollbarThumbColor,
+            handleHoverColor: _scrollbarThumbHoverColor,
+            handlePressedColor: _scrollbarThumbPressedColor,
+            trackHeight: _scrollbarWidth, // Make track full width
+            handleSize: Math.Max(16, _scrollbarWidth - 2), // Ensure visible handle size
+            handleBorderSize: 1 // Visible border
+        );
+
+        // Subscribe to scrollbar value changes
+        _scrollbar.OnValueChanged += OnScrollbarValueChanged;
+
+        // Ensure scrollbar draws on top of the text area
+        _scrollbar.Order = this.Order + 0.1f;
+    }
+
+    private void OnScrollbarValueChanged(float value)
+    {
+        // Convert scrollbar value (0-1) to scroll offset
+        int maxScrollOffset = Math.Max(0, _wrappedLines.Count - _maxVisibleLines);
+        _scrollOffsetY = (int)(value * maxScrollOffset);
+    }
+
+    private void UpdateScrollbar()
+    {
+        // Determine if scrollbar should be visible
+        bool needsScrollbar = _wrappedLines.Count > _maxVisibleLines;
+
+        if (needsScrollbar != _showScrollbar)
+        {
+            _showScrollbar = needsScrollbar;
+            // Recalculate text bounds and max visible lines when scrollbar visibility changes
+            CalculateMaxVisibleLines();
+            // Recheck after recalculation
+            needsScrollbar = _wrappedLines.Count > _maxVisibleLines;
+            _showScrollbar = needsScrollbar;
+        }
+
+        if (_showScrollbar)
+        {
+            // Position scrollbar on the right side, inside the border but outside the padding
+            var scrollbarBounds = new Rectangle(
+                _bounds.X + _bounds.Width - _borderWidth - _scrollbarWidth,
+                _bounds.Y + _borderWidth,
+                _scrollbarWidth,
+                _bounds.Height - 2 * _borderWidth
+            );
+
+            _scrollbar.SetBounds(scrollbarBounds);
+
+            // Ensure scrollbar is visible and properly ordered
+            _scrollbar.SetVisibility(true);
+            _scrollbar.Order = this.Order + 0.1f;
+
+            // Update scrollbar range and value
+            int maxScrollOffset = Math.Max(0, _wrappedLines.Count - _maxVisibleLines);
+
+            // Temporarily disconnect event handler to avoid recursion
+            _scrollbar.OnValueChanged -= OnScrollbarValueChanged;
+
+            if (maxScrollOffset > 0)
+            {
+                float currentValue = (float)_scrollOffsetY / maxScrollOffset;
+                _scrollbar.SetRange(0f, 1f);
+                _scrollbar.Value = currentValue;
+            }
+            else
+            {
+                // Even when no scrolling is needed, set a valid range so handle appears
+                _scrollbar.SetRange(0f, 1f);
+                _scrollbar.Value = 0f;
+            }
+
+            _scrollbar.OnValueChanged += OnScrollbarValueChanged;
+        }
     }
 
     private void CalculateMaxVisibleLines()
@@ -409,10 +533,11 @@ public class TextArea : UIElement
 
     private Rectangle GetTextBounds()
     {
+        int scrollbarReduction = _showScrollbar ? _scrollbarWidth : 0;
         return new Rectangle(
             _bounds.X + _borderWidth + _padding,
             _bounds.Y + _borderWidth + _padding,
-            _bounds.Width - 2 * (_borderWidth + _padding),
+            _bounds.Width - 2 * (_borderWidth + _padding) - scrollbarReduction,
             _bounds.Height - 2 * (_borderWidth + _padding)
         );
     }
@@ -424,16 +549,45 @@ public class TextArea : UIElement
         var mouseState = Mouse.GetState();
         var mousePosition = new Vector2(mouseState.X, mouseState.Y);
         var keyboardState = Keyboard.GetState();
-        
+
         // Handle mouse clicks for focus
         bool isMousePressed = mouseState.LeftButton == ButtonState.Pressed;
         bool isMouseClick = isMousePressed && _previousMouseState.LeftButton == ButtonState.Released;
-        
+
+        // Handle mouse wheel scrolling
+        if (_bounds.Contains(mousePosition) && _showScrollbar)
+        {
+            int scrollDelta = mouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
+            if (scrollDelta != 0)
+            {
+                // Scroll 3 lines per wheel notch
+                int scrollAmount = -scrollDelta / 120 * 3;
+                int maxScrollOffset = Math.Max(0, _wrappedLines.Count - _maxVisibleLines);
+                _scrollOffsetY = Math.Max(0, Math.Min(_scrollOffsetY + scrollAmount, maxScrollOffset));
+
+                // Update scrollbar to reflect new scroll position
+                if (maxScrollOffset > 0)
+                {
+                    float newValue = (float)_scrollOffsetY / maxScrollOffset;
+                    _scrollbar.OnValueChanged -= OnScrollbarValueChanged;
+                    _scrollbar.Value = newValue;
+                    _scrollbar.OnValueChanged += OnScrollbarValueChanged;
+                }
+            }
+        }
+
+        // Update scrollbar if visible
+        if (_showScrollbar)
+        {
+            _scrollbar.Update(deltaTime);
+        }
+
         if (isMouseClick)
         {
             bool wasClicked = _bounds.Contains(mousePosition);
-            
-            if (wasClicked && !_isFocused)
+            bool clickedOnScrollbar = _showScrollbar && _scrollbar.GetBoundingBox().Contains(mousePosition);
+
+            if (wasClicked && !clickedOnScrollbar && !_isFocused)
             {
                 SetFocus(true);
                 if (!ReadOnly)
@@ -445,12 +599,13 @@ public class TextArea : UIElement
             {
                 SetFocus(false);
             }
-            else if (wasClicked && _isFocused && !ReadOnly)
+            else if (wasClicked && !clickedOnScrollbar && _isFocused && !ReadOnly)
             {
                 SetCursorFromMouse(mousePosition);
             }
+            // Note: If clicked on scrollbar, let the scrollbar handle it (no text cursor changes)
         }
-        
+
         if (_isFocused && !ReadOnly)
         {
             // Update cursor blink
@@ -460,11 +615,11 @@ public class TextArea : UIElement
                 _cursorVisible = !_cursorVisible;
                 _cursorBlinkTimer = 0f;
             }
-            
+
             // Handle keyboard input
             HandleKeyboardInput(keyboardState, deltaTime);
         }
-        
+
         _previousKeyboardState = keyboardState;
         _previousMouseState = mouseState;
     }
@@ -474,12 +629,12 @@ public class TextArea : UIElement
         var textBounds = GetTextBounds();
         float relativeY = mousePosition.Y - textBounds.Y;
         int displayLineIndex = (int)(relativeY / _lineHeight) + _scrollOffsetY;
-        
+
         // Convert display line back to original line and column
         var originalPos = ConvertDisplayToOriginal(displayLineIndex, mousePosition.X - textBounds.X);
         _cursorLine = Math.Max(0, Math.Min(originalPos.Line, _lines.Count - 1));
         _cursorColumn = Math.Max(0, Math.Min(originalPos.Column, _lines[_cursorLine].Length));
-        
+
         EnsureCursorVisible();
     }
 
@@ -496,14 +651,14 @@ public class TextArea : UIElement
             }
             return (0, 0);
         }
-        
+
         // With word wrapping - find which original line this display line belongs to
         int currentDisplayLine = 0;
-        
+
         for (int originalLine = 0; originalLine < _lines.Count; originalLine++)
         {
             var wrappedSegments = WrapLine(_lines[originalLine], GetTextBounds().Width);
-            
+
             // Check if target display line is within this original line's wrapped segments
             if (displayLine >= currentDisplayLine && displayLine < currentDisplayLine + wrappedSegments.Count)
             {
@@ -512,7 +667,7 @@ public class TextArea : UIElement
                 {
                     string segment = wrappedSegments[segmentIndex];
                     int columnInSegment = GetColumnFromX(segment, x);
-                    
+
                     // Use character mapping to convert back to original position
                     var segmentMap = BuildCharacterToSegmentMap(_lines[originalLine], wrappedSegments);
                     if (segmentIndex < segmentMap.Count)
@@ -522,16 +677,16 @@ public class TextArea : UIElement
                     }
                 }
             }
-            
+
             currentDisplayLine += wrappedSegments.Count;
         }
-        
+
         // Fallback to end of text
         if (_lines.Count > 0)
         {
             return (_lines.Count - 1, _lines[_lines.Count - 1].Length);
         }
-        
+
         return (0, 0);
     }
 
@@ -540,12 +695,12 @@ public class TextArea : UIElement
     private int GetColumnFromX(string line, float x)
     {
         if (x <= 0 || string.IsNullOrEmpty(line)) return 0;
-        
+
         for (int i = 0; i <= line.Length; i++)
         {
             string substring = line.Substring(0, i);
             float width = _font.MeasureString(substring).X;
-            
+
             if (width > x)
             {
                 if (i > 0)
@@ -556,7 +711,7 @@ public class TextArea : UIElement
                 return i;
             }
         }
-        
+
         return line.Length;
     }
 
@@ -564,14 +719,14 @@ public class TextArea : UIElement
     {
         var pressedKeys = keyboardState.GetPressedKeys();
         var previousPressedKeys = _previousKeyboardState.GetPressedKeys();
-        
+
         // Handle key repeat timing
         if (_repeatingKey != Keys.None && keyboardState.IsKeyUp(_repeatingKey))
         {
             _repeatingKey = Keys.None;
             _keyRepeatTimer = 0f;
         }
-        
+
         if (_repeatingKey != Keys.None)
         {
             _keyRepeatTimer += deltaTime;
@@ -581,12 +736,12 @@ public class TextArea : UIElement
                 _keyRepeatTimer = 0f;
             }
         }
-        
+
         // Handle newly pressed keys
         foreach (var key in pressedKeys.Except(previousPressedKeys))
         {
             ProcessKey(key, keyboardState);
-            
+
             if (IsRepeatableKey(key))
             {
                 _repeatingKey = key;
@@ -606,66 +761,66 @@ public class TextArea : UIElement
     {
         _cursorBlinkTimer = 0f;
         _cursorVisible = true;
-        
+
         bool shift = keyboardState.IsKeyDown(Keys.LeftShift) || keyboardState.IsKeyDown(Keys.RightShift);
         bool ctrl = keyboardState.IsKeyDown(Keys.LeftControl) || keyboardState.IsKeyDown(Keys.RightControl);
-        
+
         switch (key)
         {
             case Keys.Back:
                 HandleBackspace();
                 break;
-                
+
             case Keys.Delete:
                 HandleDelete();
                 break;
-                
+
             case Keys.Left:
                 MoveCursorLeft(ctrl);
                 break;
-                
+
             case Keys.Right:
                 MoveCursorRight(ctrl);
                 break;
-                
+
             case Keys.Up:
                 MoveCursorUp();
                 break;
-                
+
             case Keys.Down:
                 MoveCursorDown();
                 break;
-                
+
             case Keys.Home:
                 if (ctrl)
                     MoveCursorToStart();
                 else
                     MoveCursorToLineStart();
                 break;
-                
+
             case Keys.End:
                 if (ctrl)
                     MoveCursorToEnd();
                 else
                     MoveCursorToLineEnd();
                 break;
-                
+
             case Keys.PageUp:
                 MoveCursorPageUp();
                 break;
-                
+
             case Keys.PageDown:
                 MoveCursorPageDown();
                 break;
-                
+
             case Keys.Enter:
                 InsertNewLine();
                 break;
-                
+
             case Keys.Tab:
                 InsertCharacter('\t');
                 break;
-                
+
             case Keys.A:
                 if (ctrl)
                 {
@@ -676,7 +831,7 @@ public class TextArea : UIElement
                     InsertCharacter(shift ? 'A' : 'a');
                 }
                 break;
-                
+
             case Keys.C:
                 if (ctrl)
                 {
@@ -687,7 +842,7 @@ public class TextArea : UIElement
                     InsertCharacter(shift ? 'C' : 'c');
                 }
                 break;
-                
+
             case Keys.V:
                 if (ctrl)
                 {
@@ -698,7 +853,7 @@ public class TextArea : UIElement
                     InsertCharacter(shift ? 'V' : 'v');
                 }
                 break;
-                
+
             case Keys.X:
                 if (ctrl)
                 {
@@ -709,7 +864,7 @@ public class TextArea : UIElement
                     InsertCharacter(shift ? 'X' : 'x');
                 }
                 break;
-                
+
             default:
                 char character = GetCharacterFromKey(key, shift);
                 if (character != '\0')
@@ -718,7 +873,7 @@ public class TextArea : UIElement
                 }
                 break;
         }
-        
+
         EnsureCursorVisible();
     }
 
@@ -729,7 +884,7 @@ public class TextArea : UIElement
             DeleteSelection();
             return;
         }
-        
+
         if (_cursorColumn > 0)
         {
             _lines[_cursorLine] = _lines[_cursorLine].Remove(_cursorColumn - 1, 1);
@@ -743,7 +898,7 @@ public class TextArea : UIElement
             _lines.RemoveAt(_cursorLine);
             _cursorLine--;
         }
-        
+
         UpdateTextFromLines();
     }
 
@@ -754,7 +909,7 @@ public class TextArea : UIElement
             DeleteSelection();
             return;
         }
-        
+
         if (_cursorColumn < _lines[_cursorLine].Length)
         {
             _lines[_cursorLine] = _lines[_cursorLine].Remove(_cursorColumn, 1);
@@ -765,7 +920,7 @@ public class TextArea : UIElement
             _lines[_cursorLine] += _lines[_cursorLine + 1];
             _lines.RemoveAt(_cursorLine + 1);
         }
-        
+
         UpdateTextFromLines();
     }
 
@@ -866,17 +1021,17 @@ public class TextArea : UIElement
         // Move to the beginning of the current word or previous word
         string line = _lines[_cursorLine];
         int pos = _cursorColumn - 1;
-        
+
         // Skip whitespace
         while (pos >= 0 && char.IsWhiteSpace(line[pos]))
             pos--;
-        
+
         // Skip word characters
         while (pos >= 0 && !char.IsWhiteSpace(line[pos]))
             pos--;
-        
+
         _cursorColumn = pos + 1;
-        
+
         if (_cursorColumn < 0)
         {
             if (_cursorLine > 0)
@@ -896,15 +1051,15 @@ public class TextArea : UIElement
         // Move to the beginning of the next word
         string line = _lines[_cursorLine];
         int pos = _cursorColumn;
-        
+
         // Skip current word characters
         while (pos < line.Length && !char.IsWhiteSpace(line[pos]))
             pos++;
-        
+
         // Skip whitespace
         while (pos < line.Length && char.IsWhiteSpace(line[pos]))
             pos++;
-        
+
         if (pos >= line.Length && _cursorLine < _lines.Count - 1)
         {
             _cursorLine++;
@@ -922,24 +1077,24 @@ public class TextArea : UIElement
         {
             DeleteSelection();
         }
-        
+
         string currentLine = _lines[_cursorLine];
         string beforeCursor = currentLine.Substring(0, _cursorColumn);
         string afterCursor = currentLine.Substring(_cursorColumn);
-        
+
         _lines[_cursorLine] = beforeCursor;
         _lines.Insert(_cursorLine + 1, afterCursor);
-        
+
         _cursorLine++;
         _cursorColumn = 0;
-        
+
         UpdateTextFromLines();
     }
 
     private void InsertCharacter(char character)
     {
         if (_text.Length >= MaxLength) return;
-        
+
         // Check if the character is supported by the font
         if (!IsCharacterSupported(character))
         {
@@ -953,7 +1108,7 @@ public class TextArea : UIElement
                 '\u2026' => "...", // Ellipsis …
                 _ => null // No replacement, skip the character
             };
-            
+
             if (replacement != null)
             {
                 // Insert the replacement string instead
@@ -975,15 +1130,15 @@ public class TextArea : UIElement
             // If no replacement, silently ignore the unsupported character
             return;
         }
-        
+
         if (_hasSelection)
         {
             DeleteSelection();
         }
-        
+
         _lines[_cursorLine] = _lines[_cursorLine].Insert(_cursorColumn, character.ToString());
         _cursorColumn++;
-        
+
         UpdateTextFromLines();
     }
 
@@ -1000,7 +1155,7 @@ public class TextArea : UIElement
         {
             _lines.Add(string.Empty);
         }
-        
+
         _cursorLine = Math.Max(0, Math.Min(_cursorLine, _lines.Count - 1));
         _cursorColumn = Math.Max(0, Math.Min(_cursorColumn, _lines[_cursorLine].Length));
     }
@@ -1009,7 +1164,7 @@ public class TextArea : UIElement
     {
         var displayPosition = GetCursorDisplayPosition();
         int cursorDisplayLine = displayPosition.Line;
-        
+
         if (cursorDisplayLine < _scrollOffsetY)
         {
             _scrollOffsetY = cursorDisplayLine;
@@ -1017,6 +1172,19 @@ public class TextArea : UIElement
         else if (cursorDisplayLine >= _scrollOffsetY + _maxVisibleLines)
         {
             _scrollOffsetY = cursorDisplayLine - _maxVisibleLines + 1;
+        }
+
+        // Sync scrollbar with new scroll position
+        if (_showScrollbar)
+        {
+            int maxScrollOffset = Math.Max(0, _wrappedLines.Count - _maxVisibleLines);
+            if (maxScrollOffset > 0)
+            {
+                float newValue = (float)_scrollOffsetY / maxScrollOffset;
+                _scrollbar.OnValueChanged -= OnScrollbarValueChanged;
+                _scrollbar.Value = newValue;
+                _scrollbar.OnValueChanged += OnScrollbarValueChanged;
+            }
         }
     }
 
@@ -1028,7 +1196,7 @@ public class TextArea : UIElement
             char baseChar = (char)('a' + (key - Keys.A));
             return shift ? char.ToUpper(baseChar) : baseChar;
         }
-        
+
         // Handle numbers and symbols
         return key switch
         {
@@ -1080,7 +1248,7 @@ public class TextArea : UIElement
     {
         string textToCut = _hasSelection ? GetSelectedText() : _text;
         Core.UISystem.SetClipboardText(textToCut);
-        
+
         if (_hasSelection)
         {
             DeleteSelection();
@@ -1100,15 +1268,15 @@ public class TextArea : UIElement
             {
                 DeleteSelection();
             }
-            
+
             // Insert the text character by character to handle newlines properly
             foreach (char c in clipboardText)
             {
                 if (_text.Length >= MaxLength) break;
-                
+
                 if (c == '\n' || c == '\r')
                 {
-                    if (c == '\r' && clipboardText.IndexOf(c) < clipboardText.Length - 1 && 
+                    if (c == '\r' && clipboardText.IndexOf(c) < clipboardText.Length - 1 &&
                         clipboardText[clipboardText.IndexOf(c) + 1] == '\n')
                     {
                         continue; // Skip \r in \r\n
@@ -1136,46 +1304,46 @@ public class TextArea : UIElement
     private string GetSelectedText()
     {
         if (!_hasSelection) return string.Empty;
-        
+
         int startLine = Math.Min(_selectionStartLine, _selectionEndLine);
         int endLine = Math.Max(_selectionStartLine, _selectionEndLine);
         int startCol = _selectionStartLine < _selectionEndLine ? _selectionStartColumn : _selectionEndColumn;
         int endCol = _selectionStartLine < _selectionEndLine ? _selectionEndColumn : _selectionStartColumn;
-        
+
         if (startLine == endLine)
         {
             return _lines[startLine].Substring(startCol, endCol - startCol);
         }
-        
+
         var selectedText = new List<string>();
-        
+
         // First line
         selectedText.Add(_lines[startLine].Substring(startCol));
-        
+
         // Middle lines
         for (int i = startLine + 1; i < endLine; i++)
         {
             selectedText.Add(_lines[i]);
         }
-        
+
         // Last line
         if (endLine < _lines.Count)
         {
             selectedText.Add(_lines[endLine].Substring(0, endCol));
         }
-        
+
         return string.Join("\n", selectedText);
     }
 
     private void DeleteSelection()
     {
         if (!_hasSelection) return;
-        
+
         int startLine = Math.Min(_selectionStartLine, _selectionEndLine);
         int endLine = Math.Max(_selectionStartLine, _selectionEndLine);
         int startCol = _selectionStartLine < _selectionEndLine ? _selectionStartColumn : _selectionEndColumn;
         int endCol = _selectionStartLine < _selectionEndLine ? _selectionEndColumn : _selectionStartColumn;
-        
+
         if (startLine == endLine)
         {
             _lines[startLine] = _lines[startLine].Remove(startCol, endCol - startCol);
@@ -1183,22 +1351,22 @@ public class TextArea : UIElement
         else
         {
             // Combine first and last line
-            string newLine = _lines[startLine].Substring(0, startCol) + 
+            string newLine = _lines[startLine].Substring(0, startCol) +
                            (endLine < _lines.Count ? _lines[endLine].Substring(endCol) : "");
-            
+
             // Remove lines in between
             for (int i = endLine; i >= startLine; i--)
             {
                 _lines.RemoveAt(i);
             }
-            
+
             _lines.Insert(startLine, newLine);
         }
-        
+
         _cursorLine = startLine;
         _cursorColumn = startCol;
         _hasSelection = false;
-        
+
         UpdateTextFromLines();
     }
 
@@ -1209,7 +1377,7 @@ public class TextArea : UIElement
             _isFocused = focused;
             _cursorBlinkTimer = 0f;
             _cursorVisible = true;
-            
+
             if (focused)
             {
                 OnFocusGained?.Invoke();
@@ -1234,7 +1402,7 @@ public class TextArea : UIElement
             currentBorderColor = Color.Lerp(currentBorderColor, Color.Gray, 0.3f);
         }
         spriteBatch.Draw(_pixel, _bounds, null, currentBorderColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
-        
+
         // Draw background
         var backgroundBounds = new Rectangle(
             _bounds.X + _borderWidth,
@@ -1243,9 +1411,9 @@ public class TextArea : UIElement
             _bounds.Height - 2 * _borderWidth
         );
         spriteBatch.Draw(_pixel, backgroundBounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
-        
+
         var textBounds = GetTextBounds();
-        
+
         // Draw text
         if (_wrappedLines.Count > 0)
         {
@@ -1255,29 +1423,37 @@ public class TextArea : UIElement
         {
             DrawPlaceholder(spriteBatch, textBounds);
         }
-        
+
         // Draw cursor (only if not read-only)
         if (_isFocused && _cursorVisible && !ReadOnly)
         {
             DrawCursor(spriteBatch, textBounds);
+        }
+
+        // Draw scrollbar if visible - ensure it's drawn on top
+        if (_showScrollbar)
+        {
+            // Make sure scrollbar has proper order for drawing
+            _scrollbar.Order = GetActualOrder() + 0.1f;
+            _scrollbar.Draw(spriteBatch);
         }
     }
 
     private void DrawText(SpriteBatch spriteBatch, Rectangle textBounds)
     {
         int visibleLines = Math.Min(_maxVisibleLines, _wrappedLines.Count - _scrollOffsetY);
-        
+
         for (int i = 0; i < visibleLines; i++)
         {
             int lineIndex = i + _scrollOffsetY;
             if (lineIndex >= _wrappedLines.Count) break;
-            
+
             string line = _wrappedLines[lineIndex];
             var position = new Vector2(
                 textBounds.X,
                 textBounds.Y + (i * _lineHeight)
             );
-            
+
             if (!string.IsNullOrEmpty(line))
             {
                 Color displayColor = ReadOnly ? Color.Lerp(_textColor, Color.Gray, 0.2f) : _textColor;
@@ -1297,21 +1473,21 @@ public class TextArea : UIElement
         // Get cursor position in display coordinates (accounting for word wrapping)
         var displayPosition = GetCursorDisplayPosition();
         int displayLine = displayPosition.Line - _scrollOffsetY;
-        
+
         if (displayLine >= 0 && displayLine < _maxVisibleLines)
         {
             var cursorPosition = new Vector2(
                 textBounds.X + displayPosition.X,
                 textBounds.Y + (displayLine * _lineHeight)
             );
-            
+
             var cursorBounds = new Rectangle(
                 (int)cursorPosition.X,
                 (int)cursorPosition.Y,
                 1,
                 (int)_lineHeight
             );
-            
+
             spriteBatch.Draw(_pixel, cursorBounds, null, _cursorColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
         }
     }
@@ -1325,23 +1501,23 @@ public class TextArea : UIElement
             float x = _font.MeasureString(lineText).X;
             return (_cursorLine, x);
         }
-        
+
         // With word wrapping - need to find which wrapped line the cursor is on
         int wrappedLineIndex = 0;
-        
+
         // Count wrapped lines for all lines before the cursor line
         for (int i = 0; i < _cursorLine; i++)
         {
             var wrappedLinesForThisLine = WrapLine(_lines[i], GetTextBounds().Width);
             wrappedLineIndex += wrappedLinesForThisLine.Count;
         }
-        
+
         // Now find the cursor position within the current line's wrapped segments
         var currentLineWrapped = WrapLine(_lines[_cursorLine], GetTextBounds().Width);
-        
+
         // Build a map of original character positions to wrapped segments
         var charToSegmentMap = BuildCharacterToSegmentMap(_lines[_cursorLine], currentLineWrapped);
-        
+
         // Find which segment contains the cursor
         for (int i = 0; i < charToSegmentMap.Count; i++)
         {
@@ -1355,7 +1531,7 @@ public class TextArea : UIElement
                 return (wrappedLineIndex + i, x);
             }
         }
-        
+
         // Cursor is at the end of the line
         if (currentLineWrapped.Count > 0)
         {
@@ -1363,7 +1539,7 @@ public class TextArea : UIElement
             float x = _font.MeasureString(lastSegment).X;
             return (wrappedLineIndex + currentLineWrapped.Count - 1, x);
         }
-        
+
         // Fallback
         return (wrappedLineIndex, 0f);
     }
@@ -1379,19 +1555,19 @@ public class TextArea : UIElement
     {
         var segmentMap = new List<SegmentInfo>();
         int currentPos = 0;
-        
+
         foreach (string segment in wrappedSegments)
         {
             int segmentStart = currentPos;
             int segmentEnd = currentPos + segment.Length;
-            
+
             segmentMap.Add(new SegmentInfo
             {
                 Text = segment,
                 StartChar = segmentStart,
                 EndChar = segmentEnd
             });
-            
+
             // Move position forward by segment length plus one space (if not the last segment)
             currentPos = segmentEnd;
             if (currentPos < originalLine.Length && originalLine[currentPos] == ' ')
@@ -1399,7 +1575,7 @@ public class TextArea : UIElement
                 currentPos++; // Skip the space that caused the wrap
             }
         }
-        
+
         return segmentMap;
     }
 
@@ -1412,14 +1588,14 @@ public class TextArea : UIElement
     {
         _bounds = bounds;
         CalculateMaxVisibleLines();
-        UpdateWrappedLines();
+        UpdateWrappedLines(); // This calls UpdateScrollbar() internally
     }
 
     // Public utility methods
     public void Clear()
     {
         if (ReadOnly) return;
-        
+
         Text = string.Empty;
         _cursorLine = 0;
         _cursorColumn = 0;
@@ -1472,16 +1648,86 @@ public class TextArea : UIElement
     }
 
     /// <summary>
+    /// Gets debug information about the scrollbar state.
+    /// </summary>
+    public string GetScrollbarDebugInfo()
+    {
+        if (_showScrollbar && _scrollbar != null)
+        {
+            return $"Scrollbar: Visible={_showScrollbar}, WrappedLines={_wrappedLines.Count}, MaxVisible={_maxVisibleLines}, ScrollOffset={_scrollOffsetY}, Bounds={_scrollbar.GetBoundingBox()}, Value={_scrollbar.Value}, Range={_scrollbar.MinValue}-{_scrollbar.MaxValue}";
+        }
+        return $"Scrollbar: Visible={_showScrollbar}, WrappedLines={_wrappedLines.Count}, MaxVisible={_maxVisibleLines}, ScrollOffset={_scrollOffsetY}";
+    }
+
+    /// <summary>
+    /// Generates test content that will definitely require a scrollbar.
+    /// Use this to test if the scrollbar appears correctly.
+    /// </summary>
+    public void GenerateTestContent()
+    {
+        var testLines = new List<string>();
+        for (int i = 1; i <= 50; i++)
+        {
+            testLines.Add($"This is test line number {i} with enough text to demonstrate scrolling functionality.");
+        }
+        Text = string.Join("\n", testLines);
+    }
+
+    /// <summary>
+    /// Forces the scrollbar to be visible with bright colors for debugging.
+    /// Call this after adding content to test scrollbar visibility.
+    /// </summary>
+    public void DebugScrollbar()
+    {
+        if (_scrollbar != null)
+        {
+            // Force scrollbar visible and make it very obvious
+            _showScrollbar = true;
+
+            // Create a new scrollbar with bright debug colors
+            var bounds = _scrollbar.GetBoundingBox();
+            _scrollbar.Dispose();
+
+            // Make sure bounds are reasonable for debugging
+            if (bounds.Width < 10) bounds.Width = 20;
+            if (bounds.Height < 50) bounds.Height = 100;
+
+            _scrollbar = new Slider(
+                bounds,
+                minValue: 0f,
+                maxValue: 1f,
+                initialValue: 0.3f,           // Start at 30% to make handle visible
+                step: 0f,
+                isHorizontal: false,
+                trackColor: Color.Red,        // Bright red track
+                fillColor: Color.Transparent,
+                handleColor: Color.Yellow,    // Bright yellow handle
+                handleHoverColor: Color.Orange,
+                handlePressedColor: Color.Purple,
+                trackHeight: Math.Max(bounds.Width - 2, 10), // Make track visible but not full width
+                handleSize: Math.Max(25, bounds.Width + 2), // Make handle bigger than track
+                handleBorderSize: 3           // Thick border for visibility
+            );
+
+            _scrollbar.OnValueChanged += OnScrollbarValueChanged;
+            _scrollbar.Order = GetActualOrder() + 0.2f;
+            _scrollbar.SetVisibility(true);
+
+            UpdateScrollbar();
+        }
+    }
+
+    /// <summary>
     /// Gets information about which characters in the input text are not supported by the current font.
     /// Returns a list of unsupported characters and their positions.
     /// </summary>
     public List<(char Character, int Position, string Suggestion)> GetUnsupportedCharacters(string input)
     {
         var unsupported = new List<(char, int, string)>();
-        
+
         if (string.IsNullOrEmpty(input))
             return unsupported;
-            
+
         for (int i = 0; i < input.Length; i++)
         {
             char c = input[i];
@@ -1499,12 +1745,22 @@ public class TextArea : UIElement
                 unsupported.Add((c, i, suggestion));
             }
         }
-        
+
         return unsupported;
     }
 
     public void Dispose()
     {
         _pixel?.Dispose();
+        _scrollbar?.Dispose();
+    }
+    
+    public void ScrollToEnd()
+    {
+        _cursorLine = _lines.Count - 2;
+        _cursorColumn = _lines[_cursorLine].Length;
+        EnsureCursorVisible();
+        _cursorBlinkTimer = 0f;
+        _cursorVisible = true;
     }
 }

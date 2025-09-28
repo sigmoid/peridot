@@ -55,6 +55,11 @@ public class DeveloperConsole
         _outputArea.Text += text + "\n";
     }
 
+    public TextArea GetOutputArea()
+    {
+        return _outputArea;
+    }
+
     public void RegisterCommandHandler(ConsoleCommandHandler command)
     {
         if (command != null && !_commands.Exists(c => c.CommandName.Equals(command.CommandName, StringComparison.OrdinalIgnoreCase)))
@@ -95,6 +100,8 @@ public class DeveloperConsole
         }
 
         _textInput.Clear();
+
+        _outputArea.ScrollToEnd();
     }
 
 }
