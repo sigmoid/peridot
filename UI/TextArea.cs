@@ -565,7 +565,7 @@ public class TextArea : UIElement
                 {
                     float newValue = (float)_scrollOffsetY / maxScrollOffset;
                     _scrollbar.OnValueChanged -= OnScrollbarValueChanged;
-                    _scrollbar.Value = newValue;
+                    _scrollbar.Value = 1.0f - newValue;
                     _scrollbar.OnValueChanged += OnScrollbarValueChanged;
                 }
             }
@@ -1749,7 +1749,7 @@ public class TextArea : UIElement
         _pixel?.Dispose();
         _scrollbar?.Dispose();
     }
-    
+
     public void ScrollToEnd()
     {
         _cursorLine = _lines.Count - 2;
@@ -1757,5 +1757,6 @@ public class TextArea : UIElement
         EnsureCursorVisible();
         _cursorBlinkTimer = 0f;
         _cursorVisible = true;
+        _scrollbar.Value = 0.0f;
     }
 }
