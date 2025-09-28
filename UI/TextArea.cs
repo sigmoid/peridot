@@ -438,7 +438,6 @@ public class TextArea : UIElement
 
     private void InitializeScrollbar()
     {
-        // Create scrollbar with initial bounds (will be updated in UpdateScrollbar)
         var scrollbarBounds = new Rectangle(0, 0, _scrollbarWidth, 100);
         _scrollbar = new Slider(
             scrollbarBounds,
@@ -448,32 +447,28 @@ public class TextArea : UIElement
             step: 0f,
             isHorizontal: false,
             trackColor: _scrollbarTrackColor,
-            fillColor: Color.Transparent, // We don't need fill for scrollbar
+            fillColor: Color.Transparent, 
             handleColor: _scrollbarThumbColor,
             handleHoverColor: _scrollbarThumbHoverColor,
             handlePressedColor: _scrollbarThumbPressedColor,
-            trackHeight: _scrollbarWidth, // Make track full width
-            handleSize: Math.Max(16, _scrollbarWidth - 2), // Ensure visible handle size
-            handleBorderSize: 1 // Visible border
+            trackHeight: _scrollbarWidth, 
+            handleSize: Math.Max(16, _scrollbarWidth - 2), 
+            handleBorderSize: 1 
         );
 
-        // Subscribe to scrollbar value changes
         _scrollbar.OnValueChanged += OnScrollbarValueChanged;
 
-        // Ensure scrollbar draws on top of the text area
-        _scrollbar.Order = this.Order + 0.1f;
+        _scrollbar.LocalOrderOffset = 0.05f;
     }
 
     private void OnScrollbarValueChanged(float value)
     {
-        // Convert scrollbar value (0-1) to scroll offset
         int maxScrollOffset = Math.Max(0, _wrappedLines.Count - _maxVisibleLines);
-        _scrollOffsetY = (int)(value * maxScrollOffset);
+        _scrollOffsetY = (int)((1.0f - value) * maxScrollOffset);
     }
 
     private void UpdateScrollbar()
     {
-        // Determine if scrollbar should be visible
         bool needsScrollbar = _wrappedLines.Count > _maxVisibleLines;
 
         if (needsScrollbar != _showScrollbar)

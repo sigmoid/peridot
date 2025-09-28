@@ -6,6 +6,7 @@ public class UIElement
     protected bool _isVisible = true;
     private UIElement? _parent = null;
     public float Order { get; set; } = 0.5f;
+    public float LocalOrderOffset = 0.0f;
     public virtual void Update(float deltaTime) { }
     public virtual void Draw(SpriteBatch spriteBatch) { }
     public virtual Rectangle GetBoundingBox() { return Rectangle.Empty; }
@@ -26,7 +27,10 @@ public class UIElement
 
     protected float GetActualOrder()
     {
-        var root = GetRoot();
-        return root?.Order ?? Order;
+        if(_parent != null)
+        {
+            return _parent.GetActualOrder() + LocalOrderOffset;
+        }
+        return Order;
     }
 }

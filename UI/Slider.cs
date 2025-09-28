@@ -186,11 +186,11 @@ public class Slider : UIElement
         else
         {
             float relativeY = mousePosition.Y - trackBounds.Y;
-            percentage = 1f - MathHelper.Clamp(relativeY / trackBounds.Height, 0f, 1f); // Invert for vertical
+            percentage = 1f - MathHelper.Clamp(relativeY / trackBounds.Height, 0f, 1f); 
         }
         
         float newValue = _minValue + percentage * (_maxValue - _minValue);
-        Value = newValue; // This will handle stepping and clamping
+        Value = newValue; 
     }
     
     private Rectangle GetTrackBounds()
@@ -220,7 +220,7 @@ public class Slider : UIElement
         else
         {
             int handleX = _bounds.X + (_bounds.Width - _handleSize) / 2;
-            int handleY = _bounds.Y + (int)((1f - percentage) * (_bounds.Height - _handleSize)); // Invert for vertical
+            int handleY = _bounds.Y + (int)((1f - percentage) * (_bounds.Height - _handleSize)); 
             return new Rectangle(handleX, handleY, _handleSize, _handleSize);
         }
     }
@@ -249,23 +249,19 @@ public class Slider : UIElement
         Rectangle fillBounds = GetFillBounds();
         Rectangle handleBounds = GetHandleBounds();
         
-        // Draw track background (furthest back)
         spriteBatch.Draw(_pixel, trackBounds, null, _trackColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         
-        // Draw fill (middle layer)
         if (fillBounds.Width > 0 && fillBounds.Height > 0)
         {
-            spriteBatch.Draw(_pixel, fillBounds, null, _fillColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() - 0.01f);
+            spriteBatch.Draw(_pixel, fillBounds, null, _fillColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
         }
         
-        // Draw handle
         Color handleDrawColor = _handleColor;
         if (_isDragging)
             handleDrawColor = _handlePressedColor;
         else if (_isHovered)
             handleDrawColor = _handleHoverColor;
             
-        // Draw handle border (front layer) - LOWER order = in front for FrontToBack
         if (_handleBorderSize > 0)
         {
             Rectangle borderBounds = new Rectangle(
@@ -274,11 +270,10 @@ public class Slider : UIElement
                 handleBounds.Width + _handleBorderSize * 2,
                 handleBounds.Height + _handleBorderSize * 2
             );
-            spriteBatch.Draw(_pixel, borderBounds, null, Color.Black, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() - 0.02f);
+            spriteBatch.Draw(_pixel, borderBounds, null, Color.Black, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.02f);
         }
         
-        // Draw handle (frontmost layer) - LOWEST order = front for FrontToBack
-        spriteBatch.Draw(_pixel, handleBounds, null, handleDrawColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() - 0.03f);
+        spriteBatch.Draw(_pixel, handleBounds, null, handleDrawColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
     }
 
     public override Rectangle GetBoundingBox()

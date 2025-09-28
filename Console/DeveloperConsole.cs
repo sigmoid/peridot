@@ -41,7 +41,7 @@ public class DeveloperConsole
         layout.AddChild(inputLayout);
 
         _rootElement.AddChild(layout);
-        _rootElement.Order = 0.9f;
+        _rootElement.Order = 0.7f;
         _rootElement.SetVisibility(false);
     }
 
