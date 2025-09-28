@@ -42,7 +42,7 @@ public class Core : Game
     public static PhysicsSystem Physics { get; private set; }
     public static Vector2 Gravity { get; set; }
 
-	public static int ScreenWidth => Graphics.PreferredBackBufferWidth;
+    public static int ScreenWidth => Graphics.PreferredBackBufferWidth;
     public static int ScreenHeight => Graphics.PreferredBackBufferHeight;
 
     TestRunner _testRunner;
@@ -50,7 +50,7 @@ public class Core : Game
     private static SpriteFont _defaultFont;
 
     public static SpriteFont DefaultFont => _defaultFont;
-    
+
     public static DeveloperConsole DeveloperConsole { get; private set; } = new DeveloperConsole();
 
     public Core(string title, int width, int height, bool fullScreen, string defaultFont)
@@ -95,8 +95,11 @@ public class Core : Game
         Camera = new Camera2D(GraphicsDevice.Viewport);
 
         Physics = new PhysicsSystem(Gravity);
-        
+
         DeveloperConsole.Initialize();
+
+        RegisterConsoleCommandHandlers();
+
         UISystem.AddElement(DeveloperConsole.GetRootElement());
 
         base.Initialize();
@@ -178,10 +181,10 @@ public class Core : Game
         // TODO: Implement test playback
         //TestRecorder.Update(gameTime);
 
-        if(keyboardState.IsKeyDown(Keys.OemTilde) && _previousKeyboardState.IsKeyUp(Keys.OemTilde))
+        if (keyboardState.IsKeyDown(Keys.OemTilde) && _previousKeyboardState.IsKeyUp(Keys.OemTilde))
         {
             DeveloperConsole.GetRootElement().SetVisibility(!DeveloperConsole.GetRootElement().IsVisible());
-        }   
+        }
 
         base.Update(gameTime);
 
@@ -199,7 +202,7 @@ public class Core : Game
         SpriteBatch.End();
 
         UIBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
-        UISystem.Draw(UIBatch); 
+        UISystem.Draw(UIBatch);
         UIBatch.End();
 
         base.Draw(gameTime);
@@ -213,5 +216,12 @@ public class Core : Game
             SpriteBatch?.Dispose();
         }
         base.Dispose(disposing);
+    }
+    
+    private void RegisterConsoleCommandHandlers()
+    {
+        DeveloperConsole.RegisterCommandHandler(new EchoCommandHandler());
+
+        // Additional command handlers can be registered here
     }
 }
