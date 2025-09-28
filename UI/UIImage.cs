@@ -24,7 +24,7 @@ public class UIImage : UIElement
     {
         if (_texture != null)
         {
-            spriteBatch.Draw(_texture, _bounds, _tintColor);
+            spriteBatch.Draw(_texture, _bounds, null, _tintColor, 0f, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         }
     }
 
