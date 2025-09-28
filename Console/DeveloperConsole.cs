@@ -30,7 +30,7 @@ public class DeveloperConsole
 
         HorizontalLayoutGroup inputLayout = new HorizontalLayoutGroup(new Rectangle(0, (int)(height) - 30, width, 30), 0);
         {
-            var label = new Label(new Rectangle(0, 0, 40, 30), ">>>", Core.DefaultFont, backgroundColor: new Color(0, 0, 0, 200), textColor: Color.Lime);
+            var label = new Label(new Rectangle(0, 0, 40, 30), ">>", Core.DefaultFont, backgroundColor: new Color(0, 0, 0, 200), textColor: Color.Lime);
             _textInput = new TextInput(new Rectangle(0, 0, width - 40, 30), Core.DefaultFont, "", backgroundColor: new Color(0, 0, 0, 200), textColor: Color.Lime, borderColor: Color.Black);
             _textInput.OnEnterPressed += (command) => HandleCommand(command);
             inputLayout.AddChild(label);
@@ -70,7 +70,7 @@ public class DeveloperConsole
 
     private void HandleCommand(string command)
     {
-        PrintLine($">>> {command}");
+        PrintLine($">> {command}");
 
         var commandResult = ConsoleCommandParser.Parse(command);
 
