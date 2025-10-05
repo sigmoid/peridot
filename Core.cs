@@ -98,6 +98,7 @@ public class Core : Game
 
         DeveloperConsole.Initialize();
 
+
         RegisterConsoleCommandHandlers();
 
         UISystem.AddElement(DeveloperConsole.GetRootElement());
@@ -183,7 +184,7 @@ public class Core : Game
 
         if (keyboardState.IsKeyDown(Keys.OemTilde) && _previousKeyboardState.IsKeyUp(Keys.OemTilde))
         {
-            DeveloperConsole.GetRootElement().SetVisibility(!DeveloperConsole.GetRootElement().IsVisible());
+            DeveloperConsole.Toggle();
         }
 
         base.Update(gameTime);

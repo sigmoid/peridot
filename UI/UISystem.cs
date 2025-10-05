@@ -166,13 +166,10 @@ public class UISystem
 
     public void Update(float deltaTime)
     {
-        // Use ToList() to avoid collection modification during iteration
-        // This handles cases where UI elements add/remove other elements during their Update() calls
         var elementsToUpdate = _elements.ToList();
         foreach (var element in elementsToUpdate)
         {
-            // Check if element is still in the collection (it may have been removed during iteration)
-            if (_elements.Contains(element))
+            if (_elements.Contains(element) && element.IsVisible())
             {
                 element.Update(deltaTime);
             }
@@ -181,11 +178,9 @@ public class UISystem
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        // Use ToList() to avoid collection modification during iteration
         var elementsToDraw = _elements.ToList();
         foreach (var element in elementsToDraw)
         {
-            // Check if element is still in the collection and is visible
             if (_elements.Contains(element) && element.IsVisible())
             {
                 element.Draw(spriteBatch);

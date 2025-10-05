@@ -36,6 +36,8 @@ public class Button : UIElement
 
     public override void Update(float deltaTime)
     {
+        if(!IsVisible()) return;
+        
         _isHovered = false;
 
         var mouseState = Mouse.GetState();

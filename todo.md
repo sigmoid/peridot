@@ -1,3 +1,4 @@
 ## TODO
 
-1. Update and Draw are sometimes called before initalize has been called
+1. Prevent invalid meshes from being generated
+3. UI show/hide/enable

@@ -106,6 +106,8 @@ public class TextInput : UIElement
 
     public override void Update(float deltaTime)
     {
+        if(!IsVisible()) return;
+
         var mouseState = Mouse.GetState();
         var mousePosition = new Vector2(mouseState.X, mouseState.Y);
         var keyboardState = Keyboard.GetState();

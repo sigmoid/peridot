@@ -8,6 +8,7 @@ using Peridot;
 using Peridot.UI;
 
 namespace Peridot;
+
 public class DeveloperConsole
 {
     Canvas _rootElement;
@@ -102,6 +103,13 @@ public class DeveloperConsole
         _textInput.Clear();
 
         _outputArea.ScrollToEnd();
+    }
+
+    public void Toggle()
+    {
+        _rootElement.SetVisibility(!_rootElement.IsVisible());
+        _textInput.SetFocus(_rootElement.IsVisible());
+        _textInput.Text = "";
     }
 
 }
