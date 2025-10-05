@@ -363,7 +363,7 @@ public class ScrollArea : UIElement
             
             // Begin new batch with scissor test
             spriteBatch.Begin(
-                SpriteSortMode.FrontToBack,
+                SpriteSortMode.Deferred,
                 BlendState.AlphaBlend,
                 SamplerState.PointClamp,
                 DepthStencilState.None,
@@ -403,7 +403,7 @@ public class ScrollArea : UIElement
             
             // Begin batch again with original settings
             spriteBatch.Begin(
-                SpriteSortMode.FrontToBack,
+                SpriteSortMode.Deferred,
                 BlendState.AlphaBlend,
                 SamplerState.PointClamp,
                 DepthStencilState.None,

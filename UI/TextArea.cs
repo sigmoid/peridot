@@ -14,10 +14,11 @@ using Peridot;
 /// Example usage:
 /// 
 /// // Editable TextArea
-/// var editableTextArea = new TextArea(bounds, font, "Type here...", wordWrap: true, readOnly: false);
+/// var editableTextArea = new TextArea(bounds, font, wordWrap: true, readOnly: false);
+/// editableTextArea.Text = "Type here...";
 /// 
 /// // Read-only TextArea for displaying logs
-/// var logTextArea = new TextArea(bounds, font, "", wordWrap: true, readOnly: true);
+/// var logTextArea = new TextArea(bounds, font, wordWrap: true, readOnly: true);
 /// logTextArea.Text = "This is read-only content\nUsers cannot edit this text";
 /// 
 /// // Toggle read-only state
@@ -29,11 +30,9 @@ public class TextArea : UIElement
 {
     private Rectangle _bounds;
     private string _text;
-    private string _placeholder;
     private SpriteFont _font;
     private Color _backgroundColor;
     private Color _textColor;
-    private Color _placeholderColor;
     private Color _borderColor;
     private Color _focusedBorderColor;
     private Color _cursorColor;
@@ -108,11 +107,7 @@ public class TextArea : UIElement
         }
     }
 
-    public string Placeholder
-    {
-        get => _placeholder;
-        set => _placeholder = value ?? string.Empty;
-    }
+
 
     public bool IsFocused => _isFocused;
     public bool WordWrap
@@ -152,7 +147,6 @@ public class TextArea : UIElement
     /// </summary>
     /// <param name="bounds">The bounds of the TextArea</param>
     /// <param name="font">The font to use for text rendering</param>
-    /// <param name="placeholder">Placeholder text shown when empty</param>
     /// <param name="wordWrap">Whether to enable word wrapping</param>
     /// <param name="readOnly">Whether the TextArea should be read-only (no user editing)</param>
     /// <param name="backgroundColor">Background color (default: White)</param>
@@ -164,7 +158,7 @@ public class TextArea : UIElement
     /// <param name="scrollbarWidth">Width of the scrollbar when visible (default: 16)</param>
     /// <param name="scrollbarTrackColor">Color of the scrollbar track (default: LightGray)</param>
     /// <param name="scrollbarThumbColor">Color of the scrollbar thumb (default: Gray)</param>
-    public TextArea(Rectangle bounds, SpriteFont font, string placeholder = "",
+    public TextArea(Rectangle bounds, SpriteFont font,
         bool wordWrap = true, bool readOnly = false, Color? backgroundColor = null, Color? textColor = null,
         Color? borderColor = null, Color? focusedBorderColor = null,
         int padding = 8, int borderWidth = 2, int scrollbarWidth = 16,
@@ -173,12 +167,10 @@ public class TextArea : UIElement
         _bounds = bounds;
         _font = font ?? throw new ArgumentNullException(nameof(font));
         _text = string.Empty;
-        _placeholder = placeholder ?? string.Empty;
         _wordWrap = wordWrap;
         ReadOnly = readOnly;
         _backgroundColor = backgroundColor ?? Color.White;
         _textColor = textColor ?? Color.Black;
-        _placeholderColor = Color.Gray;
         _borderColor = borderColor ?? Color.DarkGray;
         _focusedBorderColor = focusedBorderColor ?? Color.CornflowerBlue;
         _cursorColor = Color.Black;
@@ -1396,7 +1388,7 @@ public class TextArea : UIElement
         {
             currentBorderColor = Color.Lerp(currentBorderColor, Color.Gray, 0.3f);
         }
-        spriteBatch.Draw(_pixel, _bounds, null, currentBorderColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
+        spriteBatch.Draw(_pixel, _bounds, null, currentBorderColor, 0, Vector2.Zero, SpriteEffects.None, 0f);
 
         // Draw background
         var backgroundBounds = new Rectangle(
@@ -1405,25 +1397,63 @@ public class TextArea : UIElement
             _bounds.Width - 2 * _borderWidth,
             _bounds.Height - 2 * _borderWidth
         );
-        spriteBatch.Draw(_pixel, backgroundBounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.01f);
+        spriteBatch.Draw(_pixel, backgroundBounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, 0f);
 
         var textBounds = GetTextBounds();
 
-        // Draw text
+        // End current SpriteBatch to enable scissor clipping for text content
+        spriteBatch.End();
+
+        // Create RasterizerState with scissor test enabled
+        var rasterizerState = new RasterizerState
+        {
+            ScissorTestEnable = true,
+            CullMode = CullMode.None
+        };
+
+        // Set scissor rectangle to clip text content to the text bounds
+        var originalScissorRect = Core.GraphicsDevice.ScissorRectangle;
+        Core.GraphicsDevice.ScissorRectangle = textBounds;
+
+        // Begin SpriteBatch with scissor clipping enabled
+        spriteBatch.Begin(
+            sortMode: SpriteSortMode.Deferred,
+            blendState: BlendState.AlphaBlend,
+            samplerState: SamplerState.PointClamp,
+            depthStencilState: DepthStencilState.None,
+            rasterizerState: rasterizerState,
+            effect: null,
+            transformMatrix: null
+        );
+
+        // Draw text with clipping
         if (_wrappedLines.Count > 0)
         {
             DrawText(spriteBatch, textBounds);
         }
-        else if (!string.IsNullOrEmpty(_placeholder))
-        {
-            DrawPlaceholder(spriteBatch, textBounds);
-        }
 
-        // Draw cursor (only if not read-only)
+        // Draw cursor (only if not read-only) with clipping
         if (_isFocused && _cursorVisible && !ReadOnly)
         {
             DrawCursor(spriteBatch, textBounds);
         }
+
+        // End scissor-enabled SpriteBatch
+        spriteBatch.End();
+
+        // Restore original scissor rectangle
+        Core.GraphicsDevice.ScissorRectangle = originalScissorRect;
+
+        // Resume normal SpriteBatch for scrollbar
+        spriteBatch.Begin(
+            sortMode: SpriteSortMode.Deferred,
+            blendState: BlendState.AlphaBlend,
+            samplerState: SamplerState.PointClamp,
+            depthStencilState: DepthStencilState.None,
+            rasterizerState: RasterizerState.CullNone,
+            effect: null,
+            transformMatrix: null
+        );
 
         // Draw scrollbar if visible - ensure it's drawn on top
         if (_showScrollbar)
@@ -1436,32 +1466,27 @@ public class TextArea : UIElement
 
     private void DrawText(SpriteBatch spriteBatch, Rectangle textBounds)
     {
-        int visibleLines = Math.Min(_maxVisibleLines, _wrappedLines.Count - _scrollOffsetY);
-
-        for (int i = 0; i < visibleLines; i++)
+        // Draw all lines starting from the scroll offset
+        // Clipping is handled by the scissor rectangle, so we don't need to limit visible lines
+        for (int i = 0; i < _wrappedLines.Count; i++)
         {
-            int lineIndex = i + _scrollOffsetY;
-            if (lineIndex >= _wrappedLines.Count) break;
-
-            string line = _wrappedLines[lineIndex];
+            int displayLineIndex = i - _scrollOffsetY;
+            string line = _wrappedLines[i];
+            
             var position = new Vector2(
                 textBounds.X,
-                textBounds.Y + (i * _lineHeight)
+                textBounds.Y + (displayLineIndex * _lineHeight)
             );
 
             if (!string.IsNullOrEmpty(line))
             {
                 Color displayColor = ReadOnly ? Color.Lerp(_textColor, Color.Gray, 0.2f) : _textColor;
-                spriteBatch.DrawString(_font, line, position, displayColor, 0, Vector2.Zero, 1f, SpriteEffects.None, GetActualOrder() + 0.02f);
+                spriteBatch.DrawString(_font, line, position, displayColor, 0, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             }
         }
     }
 
-    private void DrawPlaceholder(SpriteBatch spriteBatch, Rectangle textBounds)
-    {
-        var position = new Vector2(textBounds.X, textBounds.Y);
-        spriteBatch.DrawString(_font, _placeholder, position, _placeholderColor, 0, Vector2.Zero, 1f, SpriteEffects.None, GetActualOrder() + 0.02f);
-    }
+
 
     private void DrawCursor(SpriteBatch spriteBatch, Rectangle textBounds)
     {
@@ -1469,22 +1494,20 @@ public class TextArea : UIElement
         var displayPosition = GetCursorDisplayPosition();
         int displayLine = displayPosition.Line - _scrollOffsetY;
 
-        if (displayLine >= 0 && displayLine < _maxVisibleLines)
-        {
-            var cursorPosition = new Vector2(
-                textBounds.X + displayPosition.X,
-                textBounds.Y + (displayLine * _lineHeight)
-            );
+        // Draw cursor regardless of bounds - scissor rectangle will clip it if needed
+        var cursorPosition = new Vector2(
+            textBounds.X + displayPosition.X,
+            textBounds.Y + (displayLine * _lineHeight)
+        );
 
-            var cursorBounds = new Rectangle(
-                (int)cursorPosition.X,
-                (int)cursorPosition.Y,
-                1,
-                (int)_lineHeight
-            );
+        var cursorBounds = new Rectangle(
+            (int)cursorPosition.X,
+            (int)cursorPosition.Y,
+            1,
+            (int)_lineHeight
+        );
 
-            spriteBatch.Draw(_pixel, cursorBounds, null, _cursorColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
-        }
+        spriteBatch.Draw(_pixel, cursorBounds, null, _cursorColor, 0, Vector2.Zero, SpriteEffects.None, 0f);
     }
 
     private (int Line, float X) GetCursorDisplayPosition()

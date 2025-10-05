@@ -27,7 +27,7 @@ public class DeveloperConsole
         _rootElement = new Canvas(new Rectangle(0, 0, width, (int)(height)));
 
         var layout = new VerticalLayoutGroup(new Rectangle(x, y, width, (int)(height)), 2);
-        _outputArea = new TextArea(new Rectangle(0, 0, width, (int)(height)), Core.DefaultFont, "", readOnly: true, backgroundColor: new Color(0, 0, 0, 200), textColor: Color.Lime, borderColor: Color.Black);
+        _outputArea = new TextArea(new Rectangle(0, 0, width, (int)(height)), Core.DefaultFont, wordWrap: true, readOnly: true, backgroundColor: new Color(0, 0, 0, 200), textColor: Color.Lime, borderColor: Color.Black);
 
         HorizontalLayoutGroup inputLayout = new HorizontalLayoutGroup(new Rectangle(0, (int)(height) - 30, width, 30), 0);
         {

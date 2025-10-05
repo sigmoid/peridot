@@ -168,7 +168,7 @@ public class ImageButton : UIElement
                     bgColor = _hoverBackgroundColor;
             }
             
-            spriteBatch.Draw(_pixel, _bounds, null, bgColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
+            spriteBatch.Draw(_pixel, _bounds, null, bgColor, 0, Vector2.Zero, SpriteEffects.None, 0f);
         }
 
         // Draw image
@@ -201,7 +201,7 @@ public class ImageButton : UIElement
                     Vector2.Zero,
                     _imageScale,
                     SpriteEffects.None,
-                    GetActualOrder() - 0.01f
+                    0f
                 );
             }
             else
@@ -218,7 +218,7 @@ public class ImageButton : UIElement
                     0f,
                     Vector2.Zero,
                     SpriteEffects.None,
-                    GetActualOrder() - 0.01f
+                    0f
                 );
             }
         }

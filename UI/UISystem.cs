@@ -179,12 +179,17 @@ public class UISystem
     public void Draw(SpriteBatch spriteBatch)
     {
         var elementsToDraw = _elements.ToList();
-        foreach (var element in elementsToDraw)
+        
+        // Filter visible elements and sort them manually by their order
+        var visibleElements = elementsToDraw
+            .Where(element => _elements.Contains(element) && element.IsVisible())
+            .OrderBy(element => element.GetActualOrder())
+            .ToList();
+        
+        // Draw elements in sorted order (back to front)
+        foreach (var element in visibleElements)
         {
-            if (_elements.Contains(element) && element.IsVisible())
-            {
-                element.Draw(spriteBatch);
-            }
+            element.Draw(spriteBatch);
         }
     }
 }

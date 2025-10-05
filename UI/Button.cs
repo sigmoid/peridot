@@ -60,7 +60,7 @@ public class Button : UIElement
 
     public override void Draw(SpriteBatch spriteBatch)
     {
-        spriteBatch.Draw(_pixel, _bounds, null, _isHovered ? _hoverColor : _defaultColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
+        spriteBatch.Draw(_pixel, _bounds, null, _isHovered ? _hoverColor : _defaultColor, 0, Vector2.Zero, SpriteEffects.None, 0f);
 
         var textSize = _font.MeasureString(_text);
         var textPosition = new Vector2(
@@ -68,7 +68,7 @@ public class Button : UIElement
             _bounds.Y + (_bounds.Height - textSize.Y) / 2
         );
 
-        spriteBatch.DrawString(_font, _text, textPosition, _textColor, 0, Vector2.Zero, 1.0f, SpriteEffects.None, GetActualOrder() + 0.01f);
+        spriteBatch.DrawString(_font, _text, textPosition, _textColor, 0, Vector2.Zero, 1.0f, SpriteEffects.None, 0f);
     }
 
     public void OnClick()

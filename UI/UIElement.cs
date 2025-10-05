@@ -25,7 +25,7 @@ public class UIElement
         return current;
     }
 
-    protected float GetActualOrder()
+    public float GetActualOrder()
     {
         if(_parent != null)
         {

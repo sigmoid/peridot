@@ -202,7 +202,7 @@ public class Core : Game
         CurrentScene.Draw(SpriteBatch);
         SpriteBatch.End();
 
-        UIBatch.Begin(samplerState: SamplerState.LinearClamp, sortMode: SpriteSortMode.FrontToBack);
+        UIBatch.Begin(samplerState: SamplerState.LinearClamp, sortMode: SpriteSortMode.Deferred);
         UISystem.Draw(UIBatch);
         UIBatch.End();
 
