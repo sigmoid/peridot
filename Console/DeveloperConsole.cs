@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Security.Principal;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Peridot;
@@ -16,6 +17,9 @@ public class DeveloperConsole
     TextArea _outputArea;
 
     private List<ConsoleCommandHandler> _commands = new List<ConsoleCommandHandler>();
+
+    // nasty hack to clear the console when opened
+    private int _clearInputCounter;
 
     public void Initialize()
     {
@@ -44,6 +48,18 @@ public class DeveloperConsole
         _rootElement.AddChild(layout);
         _rootElement.Order = 0.7f;
         _rootElement.SetVisibility(false);
+    }
+
+    public void Update()
+    { 
+        if(_clearInputCounter > 0 && _rootElement.IsVisible())
+        {
+            _clearInputCounter--;
+            if(_clearInputCounter == 0)
+            {
+                _textInput.Clear();
+            }
+        }
     }
 
     public UIElement GetRootElement()
@@ -110,6 +126,7 @@ public class DeveloperConsole
         _rootElement.SetVisibility(!_rootElement.IsVisible());
         _textInput.SetFocus(_rootElement.IsVisible());
         _textInput.Text = "";
+        _clearInputCounter = 2;
     }
 
 }
