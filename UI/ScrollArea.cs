@@ -378,8 +378,8 @@ public class ScrollArea : UIElement
                     // Temporarily modify child position for rendering
                     Rectangle originalBounds = child.GetBoundingBox();
                     Rectangle scrolledBounds = new Rectangle(
-                        originalBounds.X - (int)_scrollOffset.X,
-                        originalBounds.Y - (int)_scrollOffset.Y,
+                        originalBounds.X + viewportBounds.X - (int)_scrollOffset.X,
+                        originalBounds.Y + viewportBounds.Y - (int)_scrollOffset.Y,
                         originalBounds.Width,
                         originalBounds.Height
                     );
