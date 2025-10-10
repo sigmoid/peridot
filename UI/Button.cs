@@ -43,6 +43,8 @@ public class Button : UIElement
         var mouseState = Mouse.GetState();
         var mousePosition = new Vector2(mouseState.X, mouseState.Y);
 
+        Console.WriteLine($"Mouse Position: {mousePosition}");
+        Console.WriteLine($"Button Bounds: {_bounds}");
         if (_bounds.Contains(mousePosition))
         {
             _isHovered = true;

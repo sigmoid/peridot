@@ -10,19 +10,13 @@ using Peridot;
 /// Elements maintain their absolute positions and the Canvas simply manages their visibility,
 /// updates, and drawing as a group. Optionally provides clipping to canvas bounds.
 /// </summary>
-public class Canvas : UIElement
+public class Canvas : UIContainer
 {
     private Rectangle _bounds;
-    private List<UIElement> _children;
     private Color _backgroundColor;
     private bool _drawBackground;
     private bool _clipToBounds;
     private Texture2D _pixel;
-
-    /// <summary>
-    /// Gets the children elements in this canvas.
-    /// </summary>
-    public IReadOnlyList<UIElement> Children => _children;
 
     /// <summary>
     /// Gets or sets whether child elements should be clipped to the canvas bounds.
@@ -36,7 +30,6 @@ public class Canvas : UIElement
     public Canvas(Rectangle bounds, Color? backgroundColor = null, bool clipToBounds = false)
     {
         _bounds = bounds;
-        _children = new List<UIElement>();
         _backgroundColor = backgroundColor ?? Color.Transparent;
         _drawBackground = backgroundColor.HasValue && backgroundColor != Color.Transparent;
         _clipToBounds = clipToBounds;
@@ -49,13 +42,9 @@ public class Canvas : UIElement
     /// <summary>
     /// Adds a child element to the canvas. The element keeps its current position.
     /// </summary>
-    public virtual void AddChild(UIElement child)
+    public override void AddChild(UIElement child)
     {
-        if (child != null && !_children.Contains(child))
-        {
-            _children.Add(child);
-            child.SetParent(this);
-        }
+        base.AddChild(child);
     }
 
     /// <summary>
@@ -95,56 +84,7 @@ public class Canvas : UIElement
         }
     }
 
-    /// <summary>
-    /// Removes a child element from the canvas.
-    /// </summary>
-    public virtual void RemoveChild(UIElement child)
-    {
-        _children.Remove(child);
-    }
 
-    /// <summary>
-    /// Removes all child elements from the canvas.
-    /// </summary>
-    public virtual void ClearChildren()
-    {
-        _children.Clear();
-    }
-
-    /// <summary>
-    /// Finds the first child element at the specified position (in screen coordinates).
-    /// </summary>
-    public UIElement FindChildAt(Vector2 position)
-    {
-        // Search in reverse order to find the topmost element
-        for (int i = _children.Count - 1; i >= 0; i--)
-        {
-            var child = _children[i];
-            if (child.IsVisible() && child.GetBoundingBox().Contains(position))
-            {
-                return child;
-            }
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Gets all child elements at the specified position (in screen coordinates).
-    /// </summary>
-    public List<UIElement> FindChildrenAt(Vector2 position)
-    {
-        var result = new List<UIElement>();
-        // Create a copy to avoid collection modification during iteration
-        var childrenCopy = new List<UIElement>(_children);
-        foreach (var child in childrenCopy)
-        {
-            if (child.IsVisible() && child.GetBoundingBox().Contains(position))
-            {
-                result.Add(child);
-            }
-        }
-        return result;
-    }
 
     /// <summary>
     /// Moves all child elements by the specified offset.
@@ -166,41 +106,13 @@ public class Canvas : UIElement
         }
     }
 
-    /// <summary>
-    /// Brings a child element to the front (drawn last, appears on top).
-    /// </summary>
-    public void BringChildToFront(UIElement child)
-    {
-        if (_children.Remove(child))
-        {
-            _children.Add(child);
-        }
-    }
 
-    /// <summary>
-    /// Sends a child element to the back (drawn first, appears behind others).
-    /// </summary>
-    public void SendChildToBack(UIElement child)
-    {
-        if (_children.Remove(child))
-        {
-            _children.Insert(0, child);
-        }
-    }
 
     public override void Update(float deltaTime)
     {
         if (!IsVisible()) return;
 
-        // Create a copy to avoid collection modification during iteration
-        var childrenCopy = new List<UIElement>(_children);
-        foreach (var child in childrenCopy)
-        {
-            if (child.IsVisible())
-            {
-                child.Update(deltaTime);
-            }
-        }
+        UpdateChildren(deltaTime);
     }
 
     public override void Draw(SpriteBatch spriteBatch)
@@ -275,132 +187,9 @@ public class Canvas : UIElement
         _drawBackground = true;
     }
 
-    /// <summary>
-    /// Gets the number of child elements in the canvas.
-    /// </summary>
-    public int ChildCount => _children.Count;
 
-    /// <summary>
-    /// Calculates the bounding rectangle that contains all visible children.
-    /// </summary>
-    public Rectangle GetChildrenBounds()
-    {
-        if (_children.Count == 0) return Rectangle.Empty;
 
-        Rectangle bounds = Rectangle.Empty;
-        bool first = true;
 
-        // Create a copy to avoid collection modification during iteration
-        var childrenCopy = new List<UIElement>(_children);
-        foreach (var child in childrenCopy)
-        {
-            if (child.IsVisible())
-            {
-                var childBounds = child.GetBoundingBox();
-                if (first)
-                {
-                    bounds = childBounds;
-                    first = false;
-                }
-                else
-                {
-                    bounds = Rectangle.Union(bounds, childBounds);
-                }
-            }
-        }
-
-        return bounds;
-    }
-
-    /// <summary>
-    /// Recursively searches for a UI element with the specified name.
-    /// Returns the first element found, or null if no element with that name exists.
-    /// </summary>
-    /// <param name="name">The name to search for</param>
-    /// <returns>The first UIElement with the matching name, or null if not found</returns>
-    public override UIElement FindChildByName(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return null;
-
-        // Create a copy to avoid collection modification during iteration
-        var childrenCopy = new List<UIElement>(_children);
-
-        // Check direct children first
-        foreach (var child in childrenCopy)
-        {
-            if (child.Name == name)
-                return child;
-        }
-
-        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
-        foreach (var child in childrenCopy)
-        {
-            if (child is Canvas childCanvas)
-            {
-                var result = childCanvas.FindChildByName(name);
-                if (result != null)
-                    return result;
-            }
-            else if (child is LayoutGroup childLayoutGroup)
-            {
-                var result = childLayoutGroup.FindChildByName(name);
-                if (result != null)
-                    return result;
-            }
-            else if (child is ScrollArea childScrollArea)
-            {
-                var result = childScrollArea.FindChildByName(name);
-                if (result != null)
-                    return result;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Recursively searches for all UI elements with the specified name.
-    /// Returns a list of all matching elements, or an empty list if no elements with that name exist.
-    /// </summary>
-    /// <param name="name">The name to search for</param>
-    /// <returns>A list of all UIElements with the matching name</returns>
-    public override List<UIElement> FindAllChildrenByName(string name)
-    {
-        var results = new List<UIElement>();
-
-        if (string.IsNullOrEmpty(name))
-            return results;
-
-        // Create a copy to avoid collection modification during iteration
-        var childrenCopy = new List<UIElement>(_children);
-
-        // Check direct children
-        foreach (var child in childrenCopy)
-        {
-            if (child.Name == name)
-                results.Add(child);
-        }
-
-        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
-        foreach (var child in childrenCopy)
-        {
-            if (child is Canvas childCanvas)
-            {
-                results.AddRange(childCanvas.FindAllChildrenByName(name));
-            }
-            else if (child is LayoutGroup childLayoutGroup)
-            {
-                results.AddRange(childLayoutGroup.FindAllChildrenByName(name));
-            }
-            else if (child is ScrollArea childScrollArea)
-            {
-                results.AddRange(childScrollArea.FindAllChildrenByName(name));
-            }
-        }
-
-        return results;
-    }
 
     /// <summary>
     /// Disposes resources used by the canvas.
