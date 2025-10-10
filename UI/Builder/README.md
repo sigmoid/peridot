@@ -136,6 +136,52 @@ public class UIElementNode
         onValueChanged="HandleValueChanged" />
 ```
 
+### ScrollArea
+```xml
+<scrollarea bounds="0,0,400,300" 
+            scrollbarWidth="16" 
+            autoShowScrollbars="true" 
+            alwaysShowVertical="false" 
+            alwaysShowHorizontal="false" 
+            scrollSpeed="20.0"
+            onScrollChanged="HandleScrollChanged">
+    <!-- child elements that may exceed the bounds -->
+    <div bounds="0,0,600,800" spacing="10">
+        <!-- content that requires scrolling -->
+    </div>
+</scrollarea>
+```
+
+### TextArea
+```xml
+<!-- Editable TextArea -->
+<textarea bounds="0,0,400,200" 
+          wordWrap="true" 
+          readOnly="false" 
+          text="Initial text content..."
+          maxLength="1000"
+          backgroundColor="#ffffff" 
+          textColor="#000000" 
+          borderColor="#808080" 
+          focusedBorderColor="#0080ff"
+          padding="8" 
+          borderWidth="2" 
+          scrollbarWidth="16"
+          scrollbarTrackColor="#e0e0e0"
+          scrollbarThumbColor="#0080ff"
+          onTextChanged="HandleTextChanged"
+          onFocusGained="HandleFocusGained"
+          onFocusLost="HandleFocusLost" />
+
+<!-- Read-only TextArea for display -->
+<textarea bounds="0,0,400,200" 
+          wordWrap="true" 
+          readOnly="true" 
+          text="Read-only content here..."
+          backgroundColor="#f8f9fa" 
+          textColor="#333333" />
+```
+
 ## Attribute Parsing Utilities
 
 The system includes utilities for parsing common attribute types:

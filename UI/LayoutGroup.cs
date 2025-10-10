@@ -45,7 +45,9 @@ public abstract class LayoutGroup : UIElement
 
     public override void Update(float deltaTime)
     {
-        foreach (var child in _children)
+        // Create a defensive copy to prevent concurrent modification exceptions
+        var childrenCopy = new List<UIElement>(_children);
+        foreach (var child in childrenCopy)
         {
             child.Update(deltaTime);
         }
@@ -62,7 +64,9 @@ public abstract class LayoutGroup : UIElement
             pixel.Dispose();
         }
 
-        foreach (var child in _children)
+        // Create a defensive copy to prevent concurrent modification exceptions
+        var childrenCopy = new List<UIElement>(_children);
+        foreach (var child in childrenCopy)
         {
             if (child.IsVisible())
             {
@@ -116,15 +120,18 @@ public abstract class LayoutGroup : UIElement
         if (string.IsNullOrEmpty(name))
             return null;
 
+        // Create a defensive copy to prevent concurrent modification exceptions
+        var childrenCopy = new List<UIElement>(_children);
+        
         // Check direct children first
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child.Name == name)
                 return child;
         }
 
         // Recursively search in child layout groups
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child is LayoutGroup childLayoutGroup)
             {
@@ -150,15 +157,18 @@ public abstract class LayoutGroup : UIElement
         if (string.IsNullOrEmpty(name))
             return results;
 
+        // Create a defensive copy to prevent concurrent modification exceptions
+        var childrenCopy = new List<UIElement>(_children);
+        
         // Check direct children
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child.Name == name)
                 results.Add(child);
         }
 
         // Recursively search in child layout groups
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child is LayoutGroup childLayoutGroup)
             {

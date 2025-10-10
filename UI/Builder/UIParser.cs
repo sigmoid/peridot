@@ -287,7 +287,7 @@ namespace Peridot.UI.Builder
             var identifier = new StringBuilder();
 
             while (_position < _input.Length && 
-                   (char.IsLetterOrDigit(_input[_position]) || _input[_position] == '_'))
+                   (char.IsLetterOrDigit(_input[_position]) || _input[_position] == '_' || _input[_position] == '-'))
             {
                 identifier.Append(_input[_position]);
                 Advance();

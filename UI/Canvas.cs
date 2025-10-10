@@ -134,7 +134,9 @@ public class Canvas : UIElement
     public List<UIElement> FindChildrenAt(Vector2 position)
     {
         var result = new List<UIElement>();
-        foreach (var child in _children)
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        foreach (var child in childrenCopy)
         {
             if (child.IsVisible() && child.GetBoundingBox().Contains(position))
             {
@@ -149,7 +151,9 @@ public class Canvas : UIElement
     /// </summary>
     public void MoveChildren(Vector2 offset)
     {
-        foreach (var child in _children)
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        foreach (var child in childrenCopy)
         {
             var childBounds = child.GetBoundingBox();
             var newBounds = new Rectangle(
@@ -188,7 +192,9 @@ public class Canvas : UIElement
     {
         if (!IsVisible()) return;
 
-        foreach (var child in _children)
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        foreach (var child in childrenCopy)
         {
             if (child.IsVisible())
             {
@@ -207,8 +213,11 @@ public class Canvas : UIElement
             spriteBatch.Draw(_pixel, _bounds, null, _backgroundColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder());
         }
 
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        
         // Draw all visible children
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child.IsVisible())
             {
@@ -281,7 +290,9 @@ public class Canvas : UIElement
         Rectangle bounds = Rectangle.Empty;
         bool first = true;
 
-        foreach (var child in _children)
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        foreach (var child in childrenCopy)
         {
             if (child.IsVisible())
             {
@@ -312,15 +323,18 @@ public class Canvas : UIElement
         if (string.IsNullOrEmpty(name))
             return null;
 
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+
         // Check direct children first
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child.Name == name)
                 return child;
         }
 
         // Recursively search in child containers (Canvas and LayoutGroups)
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child is Canvas childCanvas)
             {
@@ -352,15 +366,18 @@ public class Canvas : UIElement
         if (string.IsNullOrEmpty(name))
             return results;
 
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+
         // Check direct children
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child.Name == name)
                 results.Add(child);
         }
 
         // Recursively search in child containers (Canvas and LayoutGroups)
-        foreach (var child in _children)
+        foreach (var child in childrenCopy)
         {
             if (child is Canvas childCanvas)
             {
