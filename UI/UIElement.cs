@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 public class UIElement
 {
+    public string Name = "";
     protected bool _isVisible = true;
     private UIElement? _parent = null;
     public float Order { get; set; } = 0.5f;
@@ -32,5 +33,31 @@ public class UIElement
             return _parent.GetActualOrder() + LocalOrderOffset;
         }
         return Order;
+    }
+
+    /// <summary>
+    /// Searches for a UI element with the specified name starting from this element.
+    /// This method provides a generic search interface that delegates to container-specific implementations.
+    /// </summary>
+    /// <param name="name">The name to search for</param>
+    /// <returns>The first UIElement with the matching name, or null if not found</returns>
+    public virtual UIElement FindChildByName(string name)
+    {
+        // Default implementation for non-container elements
+        // Container elements (Canvas, LayoutGroup) override this method
+        return null;
+    }
+
+    /// <summary>
+    /// Searches for all UI elements with the specified name starting from this element.
+    /// This method provides a generic search interface that delegates to container-specific implementations.
+    /// </summary>
+    /// <param name="name">The name to search for</param>
+    /// <returns>A list of all UIElements with the matching name</returns>
+    public virtual System.Collections.Generic.List<UIElement> FindAllChildrenByName(string name)
+    {
+        // Default implementation for non-container elements
+        // Container elements (Canvas, LayoutGroup) override this method
+        return new System.Collections.Generic.List<UIElement>();
     }
 }
