@@ -333,7 +333,7 @@ public class Canvas : UIElement
                 return child;
         }
 
-        // Recursively search in child containers (Canvas and LayoutGroups)
+        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
         foreach (var child in childrenCopy)
         {
             if (child is Canvas childCanvas)
@@ -345,6 +345,12 @@ public class Canvas : UIElement
             else if (child is LayoutGroup childLayoutGroup)
             {
                 var result = childLayoutGroup.FindChildByName(name);
+                if (result != null)
+                    return result;
+            }
+            else if (child is ScrollArea childScrollArea)
+            {
+                var result = childScrollArea.FindChildByName(name);
                 if (result != null)
                     return result;
             }
@@ -376,7 +382,7 @@ public class Canvas : UIElement
                 results.Add(child);
         }
 
-        // Recursively search in child containers (Canvas and LayoutGroups)
+        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
         foreach (var child in childrenCopy)
         {
             if (child is Canvas childCanvas)
@@ -386,6 +392,10 @@ public class Canvas : UIElement
             else if (child is LayoutGroup childLayoutGroup)
             {
                 results.AddRange(childLayoutGroup.FindAllChildrenByName(name));
+            }
+            else if (child is ScrollArea childScrollArea)
+            {
+                results.AddRange(childScrollArea.FindAllChildrenByName(name));
             }
         }
 

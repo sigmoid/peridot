@@ -130,12 +130,24 @@ public abstract class LayoutGroup : UIElement
                 return child;
         }
 
-        // Recursively search in child layout groups
+        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
         foreach (var child in childrenCopy)
         {
-            if (child is LayoutGroup childLayoutGroup)
+            if (child is Canvas childCanvas)
+            {
+                var result = childCanvas.FindChildByName(name);
+                if (result != null)
+                    return result;
+            }
+            else if (child is LayoutGroup childLayoutGroup)
             {
                 var result = childLayoutGroup.FindChildByName(name);
+                if (result != null)
+                    return result;
+            }
+            else if (child is ScrollArea childScrollArea)
+            {
+                var result = childScrollArea.FindChildByName(name);
                 if (result != null)
                     return result;
             }
@@ -167,12 +179,20 @@ public abstract class LayoutGroup : UIElement
                 results.Add(child);
         }
 
-        // Recursively search in child layout groups
+        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
         foreach (var child in childrenCopy)
         {
-            if (child is LayoutGroup childLayoutGroup)
+            if (child is Canvas childCanvas)
+            {
+                results.AddRange(childCanvas.FindAllChildrenByName(name));
+            }
+            else if (child is LayoutGroup childLayoutGroup)
             {
                 results.AddRange(childLayoutGroup.FindAllChildrenByName(name));
+            }
+            else if (child is ScrollArea childScrollArea)
+            {
+                results.AddRange(childScrollArea.FindAllChildrenByName(name));
             }
         }
 

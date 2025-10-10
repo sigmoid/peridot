@@ -456,6 +456,96 @@ public class ScrollArea : UIElement
         ScrollOffset = new Vector2(maxOffset.X, _scrollOffset.Y);
     }
 
+    /// <summary>
+    /// Recursively searches for a UI element with the specified name.
+    /// Returns the first element found, or null if no element with that name exists.
+    /// </summary>
+    /// <param name="name">The name to search for</param>
+    /// <returns>The first UIElement with the matching name, or null if not found</returns>
+    public override UIElement FindChildByName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return null;
+
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+
+        // Check direct children first
+        foreach (var child in childrenCopy)
+        {
+            if (child.Name == name)
+                return child;
+        }
+
+        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
+        foreach (var child in childrenCopy)
+        {
+            if (child is Canvas childCanvas)
+            {
+                var result = childCanvas.FindChildByName(name);
+                if (result != null)
+                    return result;
+            }
+            else if (child is LayoutGroup childLayoutGroup)
+            {
+                var result = childLayoutGroup.FindChildByName(name);
+                if (result != null)
+                    return result;
+            }
+            else if (child is ScrollArea childScrollArea)
+            {
+                var result = childScrollArea.FindChildByName(name);
+                if (result != null)
+                    return result;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Recursively searches for all UI elements with the specified name.
+    /// Returns a list of all matching elements, or an empty list if no elements with that name exist.
+    /// </summary>
+    /// <param name="name">The name to search for</param>
+    /// <returns>A list of all UIElements with the matching name</returns>
+    public override List<UIElement> FindAllChildrenByName(string name)
+    {
+        var results = new List<UIElement>();
+
+        if (string.IsNullOrEmpty(name))
+            return results;
+
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+
+        // Check direct children
+        foreach (var child in childrenCopy)
+        {
+            if (child.Name == name)
+                results.Add(child);
+        }
+
+        // Recursively search in child containers (Canvas, LayoutGroups, and ScrollAreas)
+        foreach (var child in childrenCopy)
+        {
+            if (child is Canvas childCanvas)
+            {
+                results.AddRange(childCanvas.FindAllChildrenByName(name));
+            }
+            else if (child is LayoutGroup childLayoutGroup)
+            {
+                results.AddRange(childLayoutGroup.FindAllChildrenByName(name));
+            }
+            else if (child is ScrollArea childScrollArea)
+            {
+                results.AddRange(childScrollArea.FindAllChildrenByName(name));
+            }
+        }
+
+        return results;
+    }
+
     public void Dispose()
     {
         _verticalScrollbar?.Dispose();
