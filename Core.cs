@@ -142,6 +142,8 @@ public class Core : Game
 
         UISystem.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
+        DeveloperConsole.Update();
+
         // Test Recording Controls
         if (keyboardState.IsKeyDown(Keys.F5) && _previousKeyboardState.IsKeyUp(Keys.F5) && !_isRecording)
         {
