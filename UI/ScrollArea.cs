@@ -439,6 +439,16 @@ public class ScrollArea : UIContainer
         ScrollOffset = new Vector2(maxOffset.X, _scrollOffset.Y);
     }
 
+    /// <summary>
+    /// Manually recalculates content bounds and updates scrollbar visibility.
+    /// Useful when child container contents change without directly modifying ScrollArea children.
+    /// </summary>
+    public void RefreshContentBounds()
+    {
+        RecalculateContentBounds();
+        UpdateScrollbarVisibility();
+    }
+
 
 
     public void Dispose()
