@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Input;
 using peridot.Physics;
 using Peridot.Graphics;
 using Peridot.Testing;
+using Peridot.UI;
 
 namespace Peridot;
 
@@ -39,6 +40,7 @@ public class Core : Game
     public static TestRecorder TestRecorder { get; private set; }
 
     public static UISystem UISystem { get; private set; } = new UISystem();
+    public static ToastManager ToastManager { get; private set; } 
     public static PhysicsSystem Physics { get; private set; }
     public static Vector2 Gravity { get; set; }
 
@@ -97,6 +99,8 @@ public class Core : Game
         Physics = new PhysicsSystem(Gravity);
 
         DeveloperConsole.Initialize();
+
+        ToastManager = new ToastManager(UISystem, DefaultFont, new Rectangle(0,0, ScreenWidth, ScreenHeight));
 
 
         RegisterConsoleCommandHandlers();
