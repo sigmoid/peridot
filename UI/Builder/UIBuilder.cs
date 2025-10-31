@@ -585,6 +585,29 @@ namespace Peridot.UI.Builder
                 
                 return CreateGridLayout(node, bounds, spacing, backgroundColor);
             };
+
+            // Draggable Window creator
+            _elementCreators["window"] = node =>
+            {
+                var bounds = AttributeParser.ParseBounds(node.Attributes.GetValueOrDefault("bounds", "100,100,400,300"));
+                var title = node.Attributes.GetValueOrDefault("title", node.TextContent);
+
+                // Optional style attributes
+                Color? backgroundColor = node.Attributes.ContainsKey("backgroundColor")
+                    ? AttributeParser.ParseColor(node.Attributes["backgroundColor"]) : (Color?)null;
+                Color? titleBarColor = node.Attributes.ContainsKey("titleBarColor")
+                    ? AttributeParser.ParseColor(node.Attributes["titleBarColor"]) : (Color?)null;
+                Color? titleTextColor = node.Attributes.ContainsKey("titleTextColor")
+                    ? AttributeParser.ParseColor(node.Attributes["titleTextColor"]) : (Color?)null;
+                Color? borderColor = node.Attributes.ContainsKey("borderColor")
+                    ? AttributeParser.ParseColor(node.Attributes["borderColor"]) : (Color?)null;
+                var borderThickness = AttributeParser.ParseInt(node.Attributes.GetValueOrDefault("borderThickness", "2"));
+
+                var window = new DraggableWindow(bounds, title, _defaultFont,
+                    backgroundColor, titleBarColor, titleTextColor, borderColor, borderThickness);
+
+                return window;
+            };
         }
 
         private Toast.ToastType ParseToastType(string type)
@@ -725,6 +748,9 @@ namespace Peridot.UI.Builder
                     break;
                 case Modal modal:
                     modal.AddContentElement(child);
+                    break;
+                case DraggableWindow window:
+                    window.AddChild(child);
                     break;
                 // Add other container types as needed
                 default:
