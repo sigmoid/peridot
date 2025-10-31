@@ -85,4 +85,9 @@ public class Button : UIElement
     {
         _bounds = bounds;
     }
+
+    public void RegisterClickHandler(Action onClick)
+    {
+        _onClick += onClick;
+    }   
 }

@@ -101,11 +101,15 @@ public class Core : Game
         DeveloperConsole.Initialize();
 
         ToastManager = new ToastManager(UISystem, DefaultFont, new Rectangle(0,0, ScreenWidth, ScreenHeight));
-
-
         RegisterConsoleCommandHandlers();
 
         UISystem.AddElement(DeveloperConsole.GetRootElement());
+
+        // Connect InputManager to UISystem for input blocking
+        if (InputManager is InputManager inputManager)
+        {
+            inputManager.SetUISystem(UISystem);
+        }
 
         base.Initialize();
     }

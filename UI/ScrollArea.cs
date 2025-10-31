@@ -7,10 +7,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Peridot;
 
-public class ScrollArea : UIElement
+public class ScrollArea : UIContainer
 {
     private Rectangle _bounds;
-    private List<UIElement> _children;
     private Vector2 _scrollOffset;
     private Rectangle _contentBounds;
     
@@ -59,7 +58,6 @@ public class ScrollArea : UIElement
     public ScrollArea(Rectangle bounds, int scrollbarWidth = 16)
     {
         _bounds = bounds;
-        _children = new List<UIElement>();
         _scrollOffset = Vector2.Zero;
         _scrollbarWidth = scrollbarWidth;
         _contentBounds = Rectangle.Empty;
@@ -137,35 +135,20 @@ public class ScrollArea : UIElement
         };
     }
 
-    public void AddChild(UIElement child)
+    protected override void OnChildAdded(UIElement child)
     {
-        if (child != null && !_children.Contains(child))
-        {
-            _children.Add(child);
-            child.SetParent(this);
-            RecalculateContentBounds();
-            UpdateScrollbarVisibility();
-        }
+        RecalculateContentBounds();
+        UpdateScrollbarVisibility();
     }
 
-    public void RemoveChild(UIElement child)
+    protected override void OnChildRemoved(UIElement child)
     {
-        if (child != null && _children.Contains(child))
-        {
-            _children.Remove(child);
-            child.SetParent(null);
-            RecalculateContentBounds();
-            UpdateScrollbarVisibility();
-        }
+        RecalculateContentBounds();
+        UpdateScrollbarVisibility();
     }
 
-    public void ClearChildren()
+    protected override void OnChildrenCleared()
     {
-        foreach (var child in _children)
-        {
-            child.SetParent(null);
-        }
-        _children.Clear();
         RecalculateContentBounds();
         UpdateScrollbarVisibility();
     }
@@ -378,8 +361,8 @@ public class ScrollArea : UIElement
                     // Temporarily modify child position for rendering
                     Rectangle originalBounds = child.GetBoundingBox();
                     Rectangle scrolledBounds = new Rectangle(
-                        originalBounds.X + viewportBounds.X - (int)_scrollOffset.X,
-                        originalBounds.Y + viewportBounds.Y - (int)_scrollOffset.Y,
+                        originalBounds.X - (int)_scrollOffset.X,
+                        originalBounds.Y - (int)_scrollOffset.Y,
                         originalBounds.Width,
                         originalBounds.Height
                     );
@@ -455,6 +438,18 @@ public class ScrollArea : UIElement
         Vector2 maxOffset = GetMaxScrollOffset();
         ScrollOffset = new Vector2(maxOffset.X, _scrollOffset.Y);
     }
+
+    /// <summary>
+    /// Manually recalculates content bounds and updates scrollbar visibility.
+    /// Useful when child container contents change without directly modifying ScrollArea children.
+    /// </summary>
+    public void RefreshContentBounds()
+    {
+        RecalculateContentBounds();
+        UpdateScrollbarVisibility();
+    }
+
+
 
     public void Dispose()
     {

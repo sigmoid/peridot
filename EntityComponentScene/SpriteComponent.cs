@@ -28,7 +28,35 @@ public class SpriteComponent : Component
     {
         Texture = defaultTexture;
 
-        SetTexture(Core.TextureAtlas.GetRegion(defaultTexture));
+        try
+        {
+            // First try texture atlas
+            if (Core.TextureAtlas != null)
+            {
+                SetTexture(Core.TextureAtlas.GetRegion(defaultTexture));
+            }
+            else
+            {
+                throw new System.Exception("TextureAtlas not loaded");
+            }
+        }
+        catch (System.Exception)
+        {
+            // If texture atlas fails, try loading from file
+            try
+            {
+                if (Core.Content != null)
+                {
+                    var texture2D = Core.Content.Load<Texture2D>(defaultTexture);
+                    _sprite = new Sprite(texture2D);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Error($"Failed to load texture '{defaultTexture}' from both texture atlas and file: {ex.Message}");
+                _sprite = new Sprite();
+            }
+        }
     }
 
     public SpriteComponent(Sprite sprite)
@@ -42,21 +70,38 @@ public class SpriteComponent : Component
         {
             try
             {
+                // First, try to load from texture atlas (existing behavior)
                 if (Core.TextureAtlas != null)
                 {
-                    var texture = Core.TextureAtlas.GetRegion(Texture);
-                    _sprite = new Sprite(texture);
+                    var textureRegion = Core.TextureAtlas.GetRegion(Texture);
+                    _sprite = new Sprite(textureRegion);
                 }
                 else
                 {
-                    Logger.Error($"TextureAtlas not loaded, cannot load texture '{Texture}'");
-                    _sprite = new Sprite();
+                    throw new System.Exception("TextureAtlas not loaded");
                 }
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                Logger.Error($"Failed to load texture '{Texture}': {ex.Message}");
-                _sprite = new Sprite();
+                // If texture atlas loading fails, try loading from file
+                try
+                {
+                    if (Core.Content != null)
+                    {
+                        var texture2D = Core.Content.Load<Texture2D>(Texture);
+                        _sprite = new Sprite(texture2D);
+                    }
+                    else
+                    {
+                        Logger.Error($"Neither TextureAtlas nor ContentManager available, cannot load texture '{Texture}'");
+                        _sprite = new Sprite();
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Logger.Error($"Failed to load texture '{Texture}' from both texture atlas and file: {ex.Message}");
+                    _sprite = new Sprite();
+                }
             }
         }
         else if(_sprite == null)

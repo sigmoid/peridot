@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Xml.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 using Peridot.Components;
 
 namespace Peridot.EntityComponentScene.Serialization;
@@ -554,6 +555,12 @@ public static class EntityFactory
             }
         }
 
+        // Handle Sprite creation - support both texture atlas regions and direct file loading
+        if (targetType == typeof(Peridot.Graphics.Sprite))
+        {
+            return CreateSpriteFromString(value);
+        }
+
         if (targetType.IsEnum)
         {
             return Enum.Parse(targetType, value);
@@ -567,5 +574,46 @@ public static class EntityFactory
         }
 
         throw new ArgumentException($"Cannot convert '{value}' to type {targetType.Name}");
+    }
+
+    /// <summary>
+    /// Create a Sprite from a string value that can be either a texture atlas region name or a file path
+    /// </summary>
+    private static Peridot.Graphics.Sprite CreateSpriteFromString(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return new Peridot.Graphics.Sprite();
+        }
+
+        // First, try to load from texture atlas (existing behavior)
+        try
+        {
+            if (Peridot.Core.TextureAtlas != null)
+            {
+                var region = Peridot.Core.TextureAtlas.GetRegion(value);
+                return new Peridot.Graphics.Sprite(region);
+            }
+        }
+        catch
+        {
+            // If texture atlas loading fails, continue to try file loading
+        }
+
+        // If texture atlas loading failed or TextureAtlas is null, try loading from file
+        try
+        {
+            if (Peridot.Core.Content != null)
+            {
+                var texture = Peridot.Core.Content.Load<Texture2D>(value);
+                return new Peridot.Graphics.Sprite(texture);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"Cannot load sprite from '{value}'. Failed to load from both texture atlas and file: {ex.Message}");
+        }
+
+        throw new ArgumentException($"Cannot load sprite from '{value}'. No TextureAtlas or ContentManager available.");
     }
 }

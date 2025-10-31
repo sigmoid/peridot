@@ -93,6 +93,11 @@ public class Sprite
         Region = region;
     }
 
+    public Sprite(Texture2D texture)
+    {
+        Region = new TextureRegion(texture, 0, 0, texture.Width, texture.Height);
+    }
+
     public void SetLayerDepth(float layerDepth)
     {
         LayerDepth = layerDepth;
