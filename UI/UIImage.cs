@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Peridot;
+using Peridot.UI;
 
 public class UIImage : UIElement
 {

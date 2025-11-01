@@ -40,13 +40,40 @@ public abstract class UIContainer : UIElement
     }
 
     /// <summary>
-    /// Removes a child element from the container.
+    /// Removes a child element from the container and performs proper cleanup.
+    /// This calls OnRemovedFromUI() on the child before removing it.
     /// </summary>
     public virtual void RemoveChild(UIElement child)
     {
         if (child != null && _children.Remove(child))
         {
+            // Call cleanup method on the child first
+            child.OnRemovedFromUI();
+            
+            // Clear parent reference
             child.SetParent(null);
+            
+            // Notify that child was removed
+            OnChildRemoved(child);
+        }
+    }
+
+    /// <summary>
+    /// Removes and destroys a child element from the container with deep cleanup.
+    /// This performs a complete cleanup of the child and all its descendants.
+    /// Use this when you want to completely delete a UI element from the system.
+    /// </summary>
+    public virtual void DestroyChild(UIElement child)
+    {
+        if (child != null && _children.Contains(child))
+        {
+            // Remove from children list first
+            _children.Remove(child);
+            
+            // Perform deep cleanup (this handles nested children and calls OnRemovedFromUI)
+            child.DeepCleanup();
+            
+            // Notify that child was removed
             OnChildRemoved(child);
         }
     }
@@ -56,11 +83,34 @@ public abstract class UIContainer : UIElement
     /// </summary>
     public virtual void ClearChildren()
     {
-        foreach (var child in _children)
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        
+        foreach (var child in childrenCopy)
         {
+            child.OnRemovedFromUI();
             child.SetParent(null);
         }
         _children.Clear();
+        OnChildrenCleared();
+    }
+
+    /// <summary>
+    /// Removes and destroys all child elements from the container with deep cleanup.
+    /// This performs complete cleanup of all children and their descendants.
+    /// </summary>
+    public virtual void DestroyAllChildren()
+    {
+        // Create a copy to avoid collection modification during iteration
+        var childrenCopy = new List<UIElement>(_children);
+        
+        _children.Clear();
+        
+        foreach (var child in childrenCopy)
+        {
+            child.DeepCleanup();
+        }
+        
         OnChildrenCleared();
     }
 

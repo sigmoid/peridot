@@ -11,6 +11,7 @@ public class Window : UIContainer
     private Rectangle _bounds;
     private Rectangle _titleBarBounds;
     private Rectangle _contentBounds;
+    private Rectangle _closeButtonBounds;
 
     private readonly SpriteFont _titleFont;
 
@@ -21,14 +22,22 @@ public class Window : UIContainer
     private Color _titleBarColor;
     private Color _titleTextColor;
     private Color _borderColor;
+    private Color _closeButtonColor;
+    private Color _closeButtonHoverColor;
+    private Color _closeButtonTextColor;
     private int _borderThickness;
 
     private bool _isDragging = false;
     private Point _dragStartMouse;
     private Point _dragStartWindow;
+    private bool _isCloseButtonHovered = false;
+    private bool _previousMousePressed = false;
 
     // Static tracking to prevent multiple windows from dragging simultaneously
     private static Window _currentlyDragging = null;
+
+    // Event for when the window is closed
+    public event Action<Window> OnWindowClosed;
 
     public Window(
         Rectangle bounds,
@@ -49,6 +58,9 @@ public class Window : UIContainer
         _titleBarColor = titleBarColor ?? Color.DarkSlateGray;
         _titleTextColor = titleTextColor ?? Color.White;
         _borderColor = borderColor ?? Color.Black;
+        _closeButtonColor = Color.DarkRed;
+        _closeButtonHoverColor = Color.Red;
+        _closeButtonTextColor = Color.White;
         _borderThickness = borderThickness;
 
         _pixel = new Texture2D(Core.GraphicsDevice, 1, 1);
@@ -61,6 +73,16 @@ public class Window : UIContainer
     {
         int titleBarHeight = (int)_titleFont.MeasureString("A").Y + 10; // padding
         _titleBarBounds = new Rectangle(_bounds.X, _bounds.Y, _bounds.Width, titleBarHeight);
+        
+        // Close button is a square on the right side of the title bar
+        int closeButtonSize = titleBarHeight - 4; // slightly smaller than title bar height
+        _closeButtonBounds = new Rectangle(
+            _bounds.X + _bounds.Width - closeButtonSize - 2, 
+            _bounds.Y + 2, 
+            closeButtonSize, 
+            closeButtonSize
+        );
+        
         _contentBounds = new Rectangle(
             _bounds.X + _borderThickness,
             _bounds.Y + titleBarHeight + _borderThickness,
@@ -77,12 +99,24 @@ public class Window : UIContainer
         var mousePoint = new Point(mouse.X, mouse.Y);
 
         bool mouseDown = mouse.LeftButton == ButtonState.Pressed;
+        bool mousePressed = mouseDown && !_previousMousePressed;
+        _previousMousePressed = mouseDown;
+
+        // Check if mouse is over close button
+        _isCloseButtonHovered = _closeButtonBounds.Contains(mousePoint);
+
+        // Handle close button click
+        if (mousePressed && _isCloseButtonHovered)
+        {
+            Close();
+            return; // Exit early since window is being closed
+        }
 
         if (!_isDragging)
         {
             // Only start drag if no other window is currently being dragged
-            // and the mouse is down on this window's title bar
-            if (mouseDown && _titleBarBounds.Contains(mousePoint) && _currentlyDragging == null)
+            // and the mouse is down on this window's title bar (but not on close button)
+            if (mouseDown && _titleBarBounds.Contains(mousePoint) && !_closeButtonBounds.Contains(mousePoint) && _currentlyDragging == null)
             {
                 _isDragging = true;
                 _currentlyDragging = this;
@@ -119,6 +153,35 @@ public class Window : UIContainer
         UpdateChildren(deltaTime);
     }
 
+    public void Close()
+    {
+        // Trigger the close event
+        OnWindowClosed?.Invoke(this);
+        
+        // Remove from parent if it exists (this will trigger proper cleanup)
+        var parent = GetParent() as UIContainer;
+        parent?.DestroyChild(this);
+    }
+
+    public override void OnRemovedFromUI()
+    {
+        // Clear dragging state if this window was being dragged
+        if (_currentlyDragging == this)
+        {
+            _currentlyDragging = null;
+            _isDragging = false;
+        }
+
+        // Clean up all children first
+        DestroyAllChildren();
+
+        // Dispose the pixel texture if we created it
+        _pixel?.Dispose();
+
+        // Call base cleanup
+        base.OnRemovedFromUI();
+    }
+
     public override void Draw(SpriteBatch spriteBatch)
     {
         if (!IsVisible()) return;
@@ -133,6 +196,19 @@ public class Window : UIContainer
 
         // Title bar
         spriteBatch.Draw(_pixel, _titleBarBounds, null, _titleBarColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.02f);
+
+        // Close button
+        Color closeButtonCurrentColor = _isCloseButtonHovered ? _closeButtonHoverColor : _closeButtonColor;
+        spriteBatch.Draw(_pixel, _closeButtonBounds, null, closeButtonCurrentColor, 0, Vector2.Zero, SpriteEffects.None, GetActualOrder() + 0.03f);
+        
+        // Close button X symbol
+        string closeText = "X";
+        var closeTextSize = _titleFont.MeasureString(closeText);
+        var closeTextPos = new Vector2(
+            _closeButtonBounds.X + (_closeButtonBounds.Width - closeTextSize.X) / 2,
+            _closeButtonBounds.Y + (_closeButtonBounds.Height - closeTextSize.Y) / 2
+        );
+        spriteBatch.DrawString(_titleFont, closeText, closeTextPos, _closeButtonTextColor, 0, Vector2.Zero, 1.0f, SpriteEffects.None, GetActualOrder() + 0.04f);
 
         // Title text
         if (!string.IsNullOrEmpty(_title))
@@ -196,6 +272,13 @@ public class Window : UIContainer
         if (titleBar.HasValue) _titleBarColor = titleBar.Value;
         if (titleText.HasValue) _titleTextColor = titleText.Value;
         if (border.HasValue) _borderColor = border.Value;
+    }
+
+    public void SetCloseButtonColors(Color? closeButton = null, Color? closeButtonHover = null, Color? closeButtonText = null)
+    {
+        if (closeButton.HasValue) _closeButtonColor = closeButton.Value;
+        if (closeButtonHover.HasValue) _closeButtonHoverColor = closeButtonHover.Value;
+        if (closeButtonText.HasValue) _closeButtonTextColor = closeButtonText.Value;
     }
 
     public void SetBorderThickness(int thickness)
